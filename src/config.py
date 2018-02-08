@@ -6,3 +6,10 @@ class Subdomain(object):
         self.name = name
         self.base = base
 
+    @property
+    def full(self):
+        if self.name:
+            return '%s.%s' % (self.name, self.base)
+
+        else:
+            return self.base

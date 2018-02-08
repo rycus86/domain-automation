@@ -4,7 +4,6 @@ import unittest
 import app
 import factories
 
-from scheduler import Scheduler
 from discovery import Discovery
 from config import Subdomain
 from dns_manager import DNSManager
@@ -19,11 +18,6 @@ class MockSubdomain(Subdomain):
         self.cert_update = 0
 
 
-class OneShotScheduler(Scheduler):
-    def schedule(self, func, *args, **kwargs):
-        func(*args, **kwargs)
-
-
 class MockDiscovery(Discovery):
     def __init__(self, *bases, base='unit.test'):
         self.subdomains = list(
@@ -31,7 +25,8 @@ class MockDiscovery(Discovery):
         )
 
     def iter_subdomains(self):
-        yield from self.subdomains
+        for subdomain in self.subdomains:
+            yield subdomain
 
 
 class MockDNSManager(DNSManager):
@@ -60,6 +55,7 @@ class MockSSLManager(SSLManager):
 
 class MockNotificationManager(NotificationManager):
     def __init__(self):
+        super(MockNotificationManager, self).__init__()
         self.events = list()
 
     def dns_updated(self, subdomain, result):
@@ -69,15 +65,14 @@ class MockNotificationManager(NotificationManager):
         self.events.append(('SSL', subdomain.name, result))
 
 
-class AppTests(unittest.TestCase):
+# noinspection PyUnresolvedReferences
+class AppTest(unittest.TestCase):
     def setUp(self):
-        self.scheduler = OneShotScheduler()
         self.discovery = MockDiscovery('www', 'test')
         self.dns = MockDNSManager()
         self.ssl = MockSSLManager()
         self.notifications = MockNotificationManager()
 
-        factories.get_scheduler = lambda: self.scheduler
         factories.get_discovery = lambda: self.discovery
         factories.get_dns_manager = lambda: self.dns
         factories.get_ssl_manager = lambda: self.ssl
@@ -167,6 +162,7 @@ class AppTests(unittest.TestCase):
 
         class RecordingNotificationManager(NotificationManager):
             def __init__(self, prefix):
+                super(RecordingNotificationManager, self).__init__()
                 self.prefix = prefix
 
             def dns_updated(self, subdomain, result):
@@ -190,4 +186,3 @@ class AppTests(unittest.TestCase):
         self.assertIn(('Y_DNS', 'test', 'OK'), events)
         self.assertIn(('Y_SSL', 'www', 'Updated'), events)
         self.assertIn(('Y_SSL', 'test', 'Updated'), events)
-

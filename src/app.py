@@ -1,4 +1,12 @@
+import signal
+import logging
+
 import factories
+
+
+logging.basicConfig(format='%(asctime)s [%(levelname)s] %(module)s.%(funcName)s - %(message)s')
+logger = logging.getLogger('domain-automation')
+logger.setLevel(logging.INFO)
 
 
 def check(subdomain, public_ip, dns, ssl, notifications):
@@ -18,16 +26,27 @@ def check_all(discovery, dns, ssl, notifications):
         check(subdomain, public_ip, dns, ssl, notifications)
 
 
-def schedule(scheduler, discovery, dns, ssl, notifications):
-    scheduler.schedule(check_all, discovery, dns, ssl, notifications)
-
-
-def main():
-    scheduler = factories.get_scheduler()
+def schedule(scheduler):
     discovery = factories.get_discovery()
     dns = factories.get_dns_manager()
     ssl = factories.get_ssl_manager()
     notifications = factories.get_notification_manager()
 
-    schedule(scheduler, discovery, dns, ssl, notifications)
+    scheduler.schedule(check_all, discovery, dns, ssl, notifications)
 
+
+def setup_signals(scheduler):
+    signal.signal(signal.SIGINT, lambda *x: scheduler.cancel())
+    signal.signal(signal.SIGTERM, lambda *x: scheduler.cancel())
+
+
+def main():
+    scheduler = factories.get_scheduler()
+
+    setup_signals(scheduler)
+
+    schedule(scheduler)
+
+
+if __name__ == '__main__':
+    main()
