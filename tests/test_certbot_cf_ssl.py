@@ -74,7 +74,7 @@ class CertbotCloudflareSSLManagerTest(unittest.TestCase):
 
         result = self.manager.update(Subdomain('still-valid', 'unit.test'))
         
-        self.assertEqual(result, 'OK, not yet due for renewal')
+        self.assertEqual(result, 'Not yet due for renewal')
         self.assertIn('-d still-valid.unit.test', ' '.join(self.mock_result.args))
 
     def test_unkown_result(self):

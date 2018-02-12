@@ -6,31 +6,70 @@ from discovery.docker_labels import DockerLabelsDiscovery
 class MockService(object):
     def __init__(self, as_dict=None, **labels):
         if labels:
-            self.labels = dict(labels)
+            self._labels = dict(labels)
         elif as_dict:
-            self.labels = as_dict
+            self._labels = as_dict
         else:
-            self.labels = dict()
+            self._labels = dict()
 
     @property
     def attrs(self):
         return {
             'Spec': {
-                'Labels': dict(self.labels)
+                'Labels': dict(self._labels)
             }
         }
 
 
+class MockContainer(object):
+    def __init__(self, as_dict=None, **labels):
+        if labels:
+            self._labels = dict(labels)
+        elif as_dict:
+            self._labels = as_dict
+        else:
+            self._labels = dict()
+
+    @property
+    def labels(self):
+        return dict(self._labels)
+
+
 class MockDockerClient(object):
-    def __init__(self):
-        self.items = list()
+    def __init__(self, *items):
+        self.items = list(items)
+        self.services_list = list()
+        self.containers_list = list()
+        self.swarm_mode = True
+
+    def add_all(self, items):
+        for item in items:
+            if isinstance(item, MockContainer):
+                self.containers_list.append(item)
+            else:
+                self.services_list.append(item)
 
     @property
     def services(self):
-        return self
+        return MockDockerClient(*self.services_list)
+
+    @property
+    def containers(self):
+        return MockDockerClient(*self.containers_list)
 
     def list(self):
         return self.items
+
+    @property
+    def swarm(self):
+        _self = self
+
+        class MockSwarm(object):
+            @property
+            def attrs(self):
+                return {'swarm': True} if _self.swarm_mode else {}
+
+        return MockSwarm()
 
 
 class DockerDiscoveryTest(unittest.TestCase):
@@ -42,9 +81,9 @@ class DockerDiscoveryTest(unittest.TestCase):
     def test_simple_subdomain_name(self):
         self.discovery.default_domain = 'test.net'
 
-        self.client.items.append(
+        self.client.add_all([
             MockService({'discovery.domain.name': 'sample'})
-        )
+        ])
 
         subdomains = list(self.discovery.iter_subdomains())
 
@@ -56,9 +95,9 @@ class DockerDiscoveryTest(unittest.TestCase):
     def test_full_domain_name(self):
         self.discovery.default_domain = 'domain.com'
 
-        self.client.items.append(
+        self.client.add_all([
             MockService({'discovery.domain.name': 'sample.domain.com'})
-        )
+        ])
 
         subdomains = list(self.discovery.iter_subdomains())
 
@@ -70,7 +109,7 @@ class DockerDiscoveryTest(unittest.TestCase):
     def test_sub_subdomain(self):
         self.discovery.default_domain = 'example.io'
 
-        self.client.items.extend([
+        self.client.add_all([
             MockService({'discovery.domain.name': 'abc.def'}),
             MockService({'discovery.domain.name': 'zzz.xyz.example.io'})
         ])
@@ -88,9 +127,9 @@ class DockerDiscoveryTest(unittest.TestCase):
     def test_no_subdomain(self):
         self.discovery.default_domain = 'short.co.uk'
 
-        self.client.items.append(
+        self.client.add_all([
             MockService({'discovery.domain.name': 'short.co.uk'})
-        )
+        ])
 
         subdomains = list(self.discovery.iter_subdomains())
 
@@ -102,7 +141,7 @@ class DockerDiscoveryTest(unittest.TestCase):
     def test_duplicates(self):
         self.discovery.default_domain = 'duplicat.es'
 
-        self.client.items.extend([
+        self.client.add_all([
             MockService({'discovery.domain.name': 'www'}),
             MockService({'discovery.domain.name': 'test'}),
             MockService({'discovery.domain.name': 'www.duplicat.es'}),
@@ -121,3 +160,38 @@ class DockerDiscoveryTest(unittest.TestCase):
         self.assertEqual(subdomains[2].name, 'demo')
         self.assertEqual(subdomains[2].base, 'duplicat.es')
         self.assertEqual(subdomains[2].full, 'demo.duplicat.es')
+
+    def test_services_and_containers(self):
+        self.discovery.default_domain = 'mixed.targets'
+
+        self.client.add_all([
+            MockService({'discovery.domain.name': 'www'}),
+            MockContainer({'discovery.domain.name': 'test'})
+        ])
+
+        subdomains = list(self.discovery.iter_subdomains())
+
+        self.assertEqual(len(subdomains), 2)
+        self.assertEqual(subdomains[0].name, 'www')
+        self.assertEqual(subdomains[0].base, 'mixed.targets')
+        self.assertEqual(subdomains[0].full, 'www.mixed.targets')
+        self.assertEqual(subdomains[1].name, 'test')
+        self.assertEqual(subdomains[1].base, 'mixed.targets')
+        self.assertEqual(subdomains[1].full, 'test.mixed.targets')
+
+    def test_not_in_swarm_mode(self):
+        self.discovery.default_domain = 'non.swarm'
+
+        self.client.swarm_mode = False
+        self.client.add_all([
+            MockService({'discovery.domain.name': 'www'}),
+            MockContainer({'discovery.domain.name': 'test'})
+        ])
+
+        subdomains = list(self.discovery.iter_subdomains())
+
+        self.assertEqual(len(subdomains), 1)
+        self.assertEqual(subdomains[0].name, 'test')
+        self.assertEqual(subdomains[0].base, 'non.swarm')
+        self.assertEqual(subdomains[0].full, 'test.non.swarm')
+

@@ -17,13 +17,22 @@ class DockerLabelsDiscovery(Discovery):
         )
 
     def _iter_subdomains(self):
-        for service in self.client.services.list():
-            labels = service.attrs['Spec'].get('Labels', dict())
+        if len(self.client.swarm.attrs) > 0:
+            for service in self.client.services.list():
+                labels = service.attrs['Spec'].get('Labels', dict())
 
-            for name, value in labels.items():
-                if name == self.label_name:
-                    for domain_name in value.split(','):
-                        yield self._to_subdomain(domain_name.strip())
+                for subdomain in self._iter_labels(labels):
+                    yield subdomain
+
+        for container in self.client.containers.list():
+            for subdomain in self._iter_labels(container.labels):
+                yield subdomain
+
+    def _iter_labels(self, labels):
+        for name, value in labels.items():
+            if name == self.label_name:
+                for domain_name in value.split(','):
+                    yield self._to_subdomain(domain_name.strip())
 
     def _to_subdomain(self, name):
         if name == self.default_domain:
