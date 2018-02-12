@@ -1,11 +1,22 @@
-import os
+from docker_helper import read_configuration
 
 
-scheduler_class = os.environ.get('SCHEDULER_CLASS', 'scheduler.oneshot.OneShotScheduler')
-discovery_class = os.environ.get('DISCOVERY_CLASS', 'discovery.noop.NoopDiscovery')
-dns_manager_class = os.environ.get('DNS_MANAGER_CLASS', 'dns_manager.noop.NoopDNSManager')
-ssl_manager_class = os.environ.get('SSL_MANAGER_CLASS', 'ssl_manager.noop.NoopSSLManager')
-notification_manager_class = os.environ.get('NOTIFICATION_MANAGER_CLASS', 'notifications.noop.NoopNotificationManager')
+scheduler_class = read_configuration(
+    'SCHEDULER_CLASS', '/var/secrets/app.config', 'scheduler.oneshot.OneShotScheduler'
+)
+discovery_class = read_configuration(
+    'DISCOVERY_CLASS', '/var/secrets/app.config', 'discovery.noop.NoopDiscovery'
+)
+dns_manager_class = read_configuration(
+    'DNS_MANAGER_CLASS', '/var/secrets/app.config', 'dns_manager.noop.NoopDNSManager'
+)
+ssl_manager_class = read_configuration(
+    'SSL_MANAGER_CLASS', '/var/secrets/app.config', 'ssl_manager.noop.NoopSSLManager'
+)
+notification_manager_class = read_configuration(
+    'NOTIFICATION_MANAGER_CLASS', '/var/secrets/app.config', 
+    'notifications.noop.NoopNotificationManager'
+)
 
 
 def _instantiate(class_name):
@@ -40,4 +51,12 @@ def get_ssl_manager():
 
 
 def get_notification_manager():
-    return _instantiate(notification_manager_class)
+    if ',' in notification_manager_class:
+        managers = [
+            _instantiate(nm.strip() for nm in notification_manager_class.split(','))
+        ]
+
+        return NotificationManager(*managers)
+
+    else:
+        return _instantiate(notification_manager_class)

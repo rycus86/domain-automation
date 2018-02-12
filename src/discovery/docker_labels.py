@@ -1,5 +1,6 @@
-import os
 import docker
+
+from docker_helper import read_configuration
 
 from config import Subdomain, base_domain
 from discovery import Discovery
@@ -8,8 +9,12 @@ from discovery import Discovery
 class DockerLabelsDiscovery(Discovery):
     def __init__(self):
         self.client = docker.from_env()
-        self.label_name = os.environ.get('DOCKER_DISCOVERY_LABEL', 'discovery.domain.name')
-        self.default_domain = os.environ.get('DEFAULT_DOMAIN', base_domain)
+        self.label_name = read_configuration(
+            'DOCKER_DISCOVERY_LABEL', '/var/secrets/discovery', 'discovery.domain.name'
+        )
+        self.default_domain = read_configuration(
+            'DEFAULT_DOMAIN', '/var/secrets/app.config', base_domain
+        )
 
     def _iter_subdomains(self):
         for service in self.client.services.list():
