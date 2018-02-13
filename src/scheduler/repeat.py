@@ -1,43 +1,56 @@
 import abc
+import logging
 import threading
 
 from scheduler import Scheduler
 
 
+logger = logging.getLogger('repeat-scheduler')
+
+
 class RepeatingScheduler(Scheduler):
+    lock = threading.Lock()
+
     def __init__(self):
-        self.timer = threading.Timer(self.interval, self._run)
+        self.timer = None
         self.job = None
         self.cancelled = False
 
     def schedule(self, func, *args, **kwargs):
         self.job = (func, args, kwargs)
 
-        if not self.cancelled:
-            self.timer.start()
+        with self.lock:
+            if not self.cancelled:
+                self.timer = threading.Timer(self.interval, self._run)
+                self.timer.start()
 
     def _run(self):
-        if self.cancelled:
-            return
+        with self.lock:
+            if self.cancelled:
+                return
 
-        if not self.job:
-            return
+            if not self.job:
+                return
 
-        func, args, kwargs = self.job
+            try:
+                func, args, kwargs = self.job
+                func(*args, **kwargs)
 
-        if not self.cancelled:
-            func(*args, **kwargs)
+            except Exception as ex:
+                logger.error('Failed to execute the scheduled task', exc_info=ex)
 
-        self.timer = threading.Timer(self.interval, self._run)
-
-        if not self.cancelled:
-            self.timer.start()
+        with self.lock:
+            if not self.cancelled:
+                self.timer = threading.Timer(self.interval, self._run)
+                self.timer.start()
 
     def cancel(self):
-        self.cancelled = True
-        self.timer.cancel()
+        with self.lock:
+            self.cancelled = True
+            self.timer.cancel()
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def interval(self):
         raise NotImplementedError('%s.interval not implemented' % type(self).__name__)
 
@@ -45,4 +58,3 @@ class RepeatingScheduler(Scheduler):
 class FiveMinutesScheduler(RepeatingScheduler):
     def interval(self):
         return 5 * 60
-
