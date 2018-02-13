@@ -77,7 +77,7 @@ class CloudflareDNSManager(DNSManager):
             )
 
             if record and record['content'] == public_ip and record['name'] == subdomain.full:
-                return 'OK'
+                return 'OK, updated'
 
         except Exception as ex:
             logger.error('Failed to update the DNS records for %s' % subdomain.full, exc_info=ex)
@@ -93,7 +93,7 @@ class CloudflareDNSManager(DNSManager):
             )
 
             if record and record['content'] == public_ip and record['name'] == subdomain.full:
-                return 'OK'
+                return 'OK, created'
 
             else:
                 return 'Failed to create'
