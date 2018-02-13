@@ -3,3 +3,4 @@ cloudflare
 docker
 certbot
 certbot-dns-cloudflare
+slackclient
