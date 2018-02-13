@@ -104,9 +104,9 @@ class CloudflareDNSTest(unittest.TestCase):
 
         result = self.manager.update(Subdomain('mock', 'sample.com'), '8.8.4.4')
 
-        self.assertEqual('OK, created', result)
+        self.assertEqual('OK, created [8.8.4.4]', result)
 
         result = self.manager.update(Subdomain('mock', 'sample.com'), '8.8.8.8')
 
-        self.assertEqual('OK, updated', result)
+        self.assertEqual('OK, updated [8.8.8.8]', result)
 

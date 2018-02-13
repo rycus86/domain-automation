@@ -186,3 +186,22 @@ class AppTest(unittest.TestCase):
         self.assertIn(('Y_DNS', 'test', 'OK'), events)
         self.assertIn(('Y_SSL', 'www', 'Updated'), events)
         self.assertIn(('Y_SSL', 'test', 'Updated'), events)
+
+    def test_notifications_with_errors(self):
+        class FailingDNSManager(MockDNSManager):
+            def update(self, subdomain, public_ip):
+                raise Exception('DNS update failed')
+
+        class FailingSSLManager(MockSSLManager):
+            def update(self, subdomain):
+                raise Exception('SSL update failed')
+
+        self.dns = FailingDNSManager()
+        self.ssl = FailingSSLManager()
+
+        app.main()
+
+        self.assertIn(('DNS', 'www', 'Failed: DNS update failed'), self.notifications.events)
+        self.assertIn(('SSL', 'www', 'Failed: SSL update failed'), self.notifications.events)
+        self.assertIn(('DNS', 'test', 'Failed: DNS update failed'), self.notifications.events)
+        self.assertIn(('SSL', 'test', 'Failed: SSL update failed'), self.notifications.events)

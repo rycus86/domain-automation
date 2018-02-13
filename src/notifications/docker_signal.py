@@ -27,6 +27,8 @@ def send_signal(client, label):
 
 class DockerSignalNotification(NotificationManager):
     def __init__(self):
+        super(DockerSignalNotification, self).__init__()
+
         self.client = docker.from_env()
         self.label_name = read_configuration(
             'DOCKER_SIGNAL_LABEL', '/var/secrets/notifications', 'domain.automation.signal'

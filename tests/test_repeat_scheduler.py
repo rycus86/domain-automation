@@ -1,3 +1,4 @@
+import os
 import time
 import unittest
 
@@ -20,6 +21,7 @@ class RepeatingSchedulerTest(unittest.TestCase):
         self.invocations = 0
 
     def tearDown(self):
+        os.environ.pop('IMMEDIATE_START', None)
         self.scheduler.cancel()
 
     def _invoke(self):
@@ -58,6 +60,20 @@ class RepeatingSchedulerTest(unittest.TestCase):
         self.scheduler.schedule(error, 'failed', issue='forced')
 
         time.sleep(0.1)
+
+        self.assertGreater(self.invocations, 0)
+
+        time.sleep(0.1)
+
+        self.assertGreater(self.invocations, 1)
+
+    def test_immediate_start(self):
+        os.environ['IMMEDIATE_START'] = 'Yes'
+
+        self.scheduler = MockScheduler()
+        self.scheduler.time = 0.05
+
+        self.scheduler.schedule(self._invoke)
 
         self.assertGreater(self.invocations, 0)
 

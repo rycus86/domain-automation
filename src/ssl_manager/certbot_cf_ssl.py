@@ -77,7 +77,7 @@ class CertbotCloudflareSSLManager(SSLManager):
                     return 'OK'
 
             elif self.MSG_NOT_YET_DUE in result.stdout:
-                return 'Not yet due for renewal'
+                return self.RESULT_NOT_YET_DUE_FOR_RENEWAL
 
             else:
                 return 'Unknown'

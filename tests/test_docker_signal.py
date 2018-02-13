@@ -105,10 +105,14 @@ class MockDockerClient(object):
 
 class DockerSignalNotificationTest(unittest.TestCase):
     def setUp(self):
+        self.original_sleep = docker_signal.time.sleep
         self.manager = docker_signal.DockerSignalNotification()
         self.client = MockDockerClient()
         self.manager.client = self.client
         self.manager.label_name = 'test.label'
+
+    def tearDown(self):
+        docker_signal.time.sleep = self.original_sleep
 
     def test_external_main(self):
         self.client.items.extend([

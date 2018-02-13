@@ -11,11 +11,21 @@ logger.setLevel(logging.INFO)
 
 def check(subdomain, public_ip, dns, ssl, notifications):
     if dns.needs_update(subdomain, public_ip):
-        dns_result = dns.update(subdomain, public_ip)
+        try:
+            dns_result = dns.update(subdomain, public_ip)
+
+        except Exception as ex:
+            dns_result = 'Failed: %s' % ex
+
         notifications.dns_updated(subdomain, dns_result)
     
     if ssl.needs_update(subdomain):
-        ssl_result = ssl.update(subdomain)
+        try:
+            ssl_result = ssl.update(subdomain)
+
+        except Exception as ex:
+            ssl_result = 'Failed: %s' % ex
+            
         notifications.ssl_updated(subdomain, ssl_result)
 
 
