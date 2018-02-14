@@ -15,9 +15,6 @@ class CertbotCloudflareSSLManager(SSLManager):
     MSG_SUCCESSFUL = 'Congratulations!'
     MSG_NOT_YET_DUE = 'not yet due for renewal'
 
-    def __init__(self):
-        self.use_staging = False
-
     def needs_update(self, subdomain):
         return True  # we'll use 'certonly' with '--keep'
 
@@ -30,6 +27,9 @@ class CertbotCloudflareSSLManager(SSLManager):
             dns_propagation_seconds = read_configuration(
                 'DNS_PROPAGATION_SECONDS', '/var/secrets/certbot', default='10'
             )
+            use_staging = read_configuration(
+                'CERTBOT_STAGING', '/var/secrets/certbot', default='no'
+            ).lower() in ('yes', 'true', '1')
 
             with open('.cloudflare.ini', 'w') as cloudflare_config:
                 cloudflare_config.write('dns_cloudflare_email = %s\n' % cf_email)
@@ -48,7 +48,7 @@ class CertbotCloudflareSSLManager(SSLManager):
                     '--email', certbot_email, '--agree-tos'
                 ]
 
-            if self.use_staging:
+            if use_staging:
                 command.append('--staging')
 
             result = subprocess.run(

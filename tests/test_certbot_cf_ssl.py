@@ -22,6 +22,7 @@ class CertbotCloudflareSSLManagerTest(unittest.TestCase):
 
         os.environ['CLOUDFLARE_EMAIL'] = 'unittest@cf.com'
         os.environ['CLOUDFLARE_TOKEN'] = 'cf001234'
+        os.environ['CERTBOT_STAGING'] = 'no'
 
         subprocess.run = self._mock_subprocess_run
 
@@ -35,6 +36,10 @@ class CertbotCloudflareSSLManagerTest(unittest.TestCase):
     
     def tearDown(self):
         subprocess.run = self._original_subprocess_run
+        
+        del os.environ['CLOUDFLARE_EMAIL']
+        del os.environ['CLOUDFLARE_TOKEN']
+        del os.environ['CERTBOT_STAGING']
 
     def test_always_updates(self):
         self.assertTrue(self.manager.needs_update(Subdomain('test')))
@@ -86,7 +91,7 @@ class CertbotCloudflareSSLManagerTest(unittest.TestCase):
         self.assertIn('-d unknown.unit.test', ' '.join(self.mock_result.args))
 
     def test_use_staging_servers(self):
-        self.manager.use_staging = True
+        os.environ['CERTBOT_STAGING'] = 'Yes'
 
         self.manager.update(Subdomain('staging', 'unit.test'))
 
