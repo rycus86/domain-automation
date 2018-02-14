@@ -19,7 +19,9 @@ class MockSubdomain(Subdomain):
 
 
 class MockDiscovery(Discovery):
-    def __init__(self, *bases, base='unit.test'):
+    def __init__(self, *bases, **kwargs):
+        base = kwargs.pop('base', 'unit.test')
+
         self.subdomains = list(
             MockSubdomain(b, base) for b in bases
         )

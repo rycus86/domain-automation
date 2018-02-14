@@ -103,6 +103,31 @@ class MockDockerClient(object):
         return MockDockerServices(self, self.tasks)
 
 
+class MockLogContext(object):
+    def __init__(self, name):
+        self.name = name
+        self.output = list()
+
+        self.original_logger_debug = docker_signal.logger.debug
+        self.original_logger_info = docker_signal.logger.info
+        self.original_logger_error = docker_signal.logger.error
+
+    def __enter__(self):
+        def log(level, message):
+            self.output.append('%s:%s:%s' % (level, self.name, message))
+
+        docker_signal.logger.debug = lambda m: log('DEBUG', m)
+        docker_signal.logger.info = lambda m: log('INFO', m)
+        docker_signal.logger.error = lambda m: log('ERROR', m)
+        
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        docker_signal.logger.debug = self.original_logger_debug
+        docker_signal.logger.info = self.original_logger_info
+        docker_signal.logger.error = self.original_logger_error
+
+
 class DockerSignalNotificationTest(unittest.TestCase):
     def setUp(self):
         self.original_sleep = docker_signal.time.sleep
@@ -111,8 +136,14 @@ class DockerSignalNotificationTest(unittest.TestCase):
         self.manager.client = self.client
         self.manager.label_name = 'test.label'
 
+        if not hasattr(self, 'assertLogs'):
+            setattr(self, 'assertLogs', self._assert_logs)
+
     def tearDown(self):
         docker_signal.time.sleep = self.original_sleep
+
+    def _assert_logs(self, name, level):
+        return MockLogContext(name)
 
     def test_external_main(self):
         self.client.items.extend([

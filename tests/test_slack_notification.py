@@ -19,6 +19,31 @@ class MockSlackClient(object):
         self.test_case.assertEqual(self.last_call, (args, kwargs))
 
 
+class MockLogContext(object):
+    def __init__(self, name):
+        self.name = name
+        self.output = list()
+
+        self.original_logger_debug = slack_message.logger.debug
+        self.original_logger_info = slack_message.logger.info
+        self.original_logger_error = slack_message.logger.error
+
+    def __enter__(self):
+        def log(level, message):
+            self.output.append('%s:%s:%s' % (level, self.name, message))
+
+        slack_message.logger.debug = lambda m: log('DEBUG', m)
+        slack_message.logger.info = lambda m: log('INFO', m)
+        slack_message.logger.error = lambda m: log('ERROR', m)
+        
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        slack_message.logger.debug = self.original_logger_debug
+        slack_message.logger.info = self.original_logger_info
+        slack_message.logger.error = self.original_logger_error
+
+
 class SlackNotificationTest(unittest.TestCase):
     def setUp(self):
         self.original_sleep = slack_message.time.sleep
@@ -27,8 +52,14 @@ class SlackNotificationTest(unittest.TestCase):
         self.manager.channel = 'unittest'
         self.manager.client = self.client
 
+        if not hasattr(self, 'assertLogs'):
+            setattr(self, 'assertLogs', self._assert_logs)
+
     def tearDown(self):
         slack_message.time.sleep = self.original_sleep
+
+    def _assert_logs(self, name, level):
+        return MockLogContext(name)
 
     def test_dns_update(self):
         message = '`[DNS update]` *dns.update.test* : OK, test'

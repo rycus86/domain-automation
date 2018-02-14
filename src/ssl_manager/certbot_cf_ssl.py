@@ -51,7 +51,7 @@ class CertbotCloudflareSSLManager(SSLManager):
             if use_staging:
                 command.append('--staging')
 
-            result = subprocess.run(
+            result = self.subprocess_run(
                 command,
                 timeout=60, universal_newlines=True,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -85,3 +85,24 @@ class CertbotCloudflareSSLManager(SSLManager):
         finally:
             if os.path.exists('.cloudflare.ini'):
                 os.remove('.cloudflare.ini')
+
+    def subprocess_run(self, command, **kwargs):
+        if hasattr(subprocess, 'run'):
+            return subprocess.run(command, **kwargs)
+
+        else:
+            del kwargs['timeout']
+
+            process = subprocess.Popen(command, **kwargs)
+
+            returncode = process.wait()
+            stdout, stderr = process.communicate()
+
+            class ProcessResult(object):
+                def __init__(self, returncode, stdout, stderr):
+                    self.returncode = returncode
+                    self.stdout = stdout
+                    self.stderr = stderr
+
+            return ProcessResult(returncode, stdout, stderr)
+

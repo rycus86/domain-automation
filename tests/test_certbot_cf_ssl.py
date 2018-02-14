@@ -18,15 +18,13 @@ class MockCompletedProcess(object):
 class CertbotCloudflareSSLManagerTest(unittest.TestCase):
     def setUp(self):
         self.mock_result = MockCompletedProcess()
-        self._original_subprocess_run = subprocess.run
 
         os.environ['CLOUDFLARE_EMAIL'] = 'unittest@cf.com'
         os.environ['CLOUDFLARE_TOKEN'] = 'cf001234'
         os.environ['CERTBOT_STAGING'] = 'no'
 
-        subprocess.run = self._mock_subprocess_run
-
         self.manager = CertbotCloudflareSSLManager()
+        self.manager.subprocess_run = self._mock_subprocess_run
 
     def _mock_subprocess_run(self, popen_args, **kwargs):
         result = self.mock_result
@@ -35,8 +33,6 @@ class CertbotCloudflareSSLManagerTest(unittest.TestCase):
         return result
     
     def tearDown(self):
-        subprocess.run = self._original_subprocess_run
-        
         del os.environ['CLOUDFLARE_EMAIL']
         del os.environ['CLOUDFLARE_TOKEN']
         del os.environ['CERTBOT_STAGING']
