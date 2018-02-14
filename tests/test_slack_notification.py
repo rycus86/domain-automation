@@ -61,6 +61,20 @@ class SlackNotificationTest(unittest.TestCase):
     def _assert_logs(self, name, level):
         return MockLogContext(name)
 
+    def test_message(self):
+        message = 'Sample notification message'
+
+        with self.assertLogs('slack-notification', 'DEBUG') as logs:
+            self.manager.message(message)
+
+        self.client.assert_call('chat.postMessage', channel='unittest', text=message)
+
+        self.assertEqual(len(logs.output), 1)
+        self.assertEqual(
+            logs.output[0],
+            'INFO:slack-notification:Slack message sent: %s' % message
+        )
+
     def test_dns_update(self):
         message = '`[DNS update]` *dns.update.test* : OK, test'
 

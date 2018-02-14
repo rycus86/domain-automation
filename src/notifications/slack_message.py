@@ -25,9 +25,12 @@ class SlackNotificationManager(NotificationManager):
 
         self.client = SlackClient(token)
 
-    def send_message(self, update_type, subdomain, result, retry=1):
+    def send_update(self, update_type, subdomain, result):
         message = '`[%s update]` *%s* : %s' % (update_type, subdomain.full, result)
+        
+        self.send_message(message)
 
+    def send_message(self, message, retry=1):
         if retry > 3:
             logger.error('Giving up on Slack message: %s' % message)
             return
@@ -45,7 +48,7 @@ class SlackNotificationManager(NotificationManager):
                 logger.debug('Retrying Slack message after %d seconds' % delay)
 
                 time.sleep(delay)
-                self.send_message(update_type, subdomain, result, retry=retry + 1)
+                self.send_message(message, retry=retry + 1)
 
             else:
                 logger.error('Failed to send message to Slack: %s' % message)
@@ -54,10 +57,13 @@ class SlackNotificationManager(NotificationManager):
             logger.info('Slack message sent: %s' % message)
 
     def dns_updated(self, subdomain, result):
-        self.send_message('DNS', subdomain, result)
+        self.send_update('DNS', subdomain, result)
 
     def ssl_updated(self, subdomain, result):
         if result == SSLManager.RESULT_NOT_YET_DUE_FOR_RENEWAL:
             return
 
-        self.send_message('SSL', subdomain, result)
+        self.send_update('SSL', subdomain, result)
+
+    def message(self, text):
+        self.send_message(text)
