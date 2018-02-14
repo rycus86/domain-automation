@@ -75,13 +75,27 @@ class AppTest(unittest.TestCase):
         self.dns = MockDNSManager()
         self.ssl = MockSSLManager()
         self.notifications = MockNotificationManager()
+        self.scheduler = factories.get_scheduler()
 
         factories.get_discovery = lambda: self.discovery
         factories.get_dns_manager = lambda: self.dns
         factories.get_ssl_manager = lambda: self.ssl
         factories.get_notification_manager = lambda: self.notifications
+        factories.get_scheduler = lambda: self.scheduler
 
-    def test_main(self):
+        self.original_signal = app.signal.signal
+
+    def tearDown(self):
+        app.signal.signal = self.original_signal
+
+    def test_main(self):        
+        signals = dict()
+        
+        def mock_signal(signal, func):
+            signals[signal] = func
+
+        app.signal.signal = mock_signal
+
         app.main()
 
         current_ip = self.dns.get_current_public_ip()
@@ -95,6 +109,11 @@ class AppTest(unittest.TestCase):
         self.assertIn(('DNS', 'test', 'OK'), self.notifications.events)
         self.assertIn(('SSL', 'www', 'Updated'), self.notifications.events)
         self.assertIn(('SSL', 'test', 'Updated'), self.notifications.events)
+        self.assertNotIn(('Message', 'Application exiting'), self.notifications.events)
+
+        signals[app.signal.SIGTERM](app.signal.SIGTERM)
+
+        self.assertIn(('Message', 'Application exiting'), self.notifications.events)
 
     def test_skip_dns_update(self):
         class WWWUpdatingDNSManager(MockDNSManager):
