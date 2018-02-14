@@ -41,6 +41,7 @@ jobs:
     - &deploy-stage
       stage: deploy
       if: branch = master
+      sudo: true
       script:
         - docker run --rm --privileged multiarch/qemu-user-static:register --reset
         - |
