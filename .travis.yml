@@ -1,0 +1,35 @@
+language: python
+python:
+- '3.6'
+- '3.5'
+- '3.4'
+- '2.7'
+
+script:
+  # prepare libraries and reporters
+  - pip install nose2 coverage pylint coveralls
+  # - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  # - chmod +x ./cc-test-reporter
+  # - curl -fsSL https://testspace-client.s3.amazonaws.com/testspace-linux.tgz | tar -zxvf- -C .
+  # - ./testspace config url rycus86.testspace.com
+  # run the tests
+  - |
+    nose2 -v \
+      --plugin nose2.plugins.junitxml --junit-xml \
+      --with-coverage --coverage-report xml --coverage-report term-missing
+after_script:
+  # coverage reports
+  - |
+    if [[ "$(python --version 2>&1)" = *3.6* ]]; then
+      # coveralls || exit 0
+      # ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT || exit 0
+      # ./testspace nose2-junit.xml coverage.xml || exit 0
+      pylint src/*.py -r n \
+        --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" \
+        | tee pylint-report.txt ; echo -n
+      # sonar-scanner -Dsonar.projectKey=domain-automation -Dsonar.sources=src \
+      #  -Dsonar.python.xunit.reportPath=nose2-junit.xml \
+      #  -Dsonar.python.coverage.reportPath=coverage.xml \
+      #  -Dsonar.python.pylint.reportPath=pylint-report.txt
+    fi
+
