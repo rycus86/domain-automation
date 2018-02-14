@@ -4,3 +4,4 @@ docker
 certbot
 certbot-dns-cloudflare
 slackclient
+docker-helper
