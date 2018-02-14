@@ -5,13 +5,17 @@ python:
 - '3.4'
 - '2.7'
 
+addons:
+  sonarcloud:
+    organization: "rycus86-github"
+    token:
+      secure: "tecJ8JScVPUpNmGpmTHM/qb/C3cNyuXBDwHOEh2OS8YktHVeopcZ84A/oX4ew8TDHTaNLKqx8X0otpJDG2M9ZKmlkazNw1cEYpgZ8u9YpFJYUKNCi5Q8mq0bp4Hcp9jF9bEmHcMs7Tk7o9KJd/5bW3CnbP/Z8/rsMSWkjupjK6irByNLWdvP5sSEUBWQCSkrlsXsDisk4JOAxNiL0RQLdY68YYZptdEgITthaWcFQZ2gwxD1nWHvY5W4xfbn4b+UZHH8pg3R8p/T/Pj8ahlSA++HpwKPB7BskxvlEn01ZYiZxgSOVbZArCsvpZk/ka7ZFCgevsiXMQON+VawlR4QqZzIL6OlxoSbSh4asq4+lGkZqxH6BCY5J4vsoRgZ/5fYbrBp53KdiSh7LNpHlhcjw3dVVBf5msnwFBAdvwBKKAKj28ucn+nvWzkwEnkeJvCvg5R+Jqrp8aCb9kbHWPdJwKSp7AX6Bxt1REK3TyFWtqAPz7gNKFR/Tx7mYSQqnHmWIkQ1Sr7x1PMF7aaZZOUWPf4JE84TCHpBAZqlG3LAH7hGWL1BeJMgs0PRyXNWttRqOKmZZu8k4w0OTp1iR+q9o3uibPgamNRgFlj6PpU0Qep6iddsnKdP/36DYka0TYdilEJ1yQdOyrH6WF977O0+IZSAemaMyVqqyiNobA1fnBk="
+
 script:
   # prepare libraries and reporters
   - pip install nose2 coverage pylint coveralls
-  # - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-  # - chmod +x ./cc-test-reporter
-  # - curl -fsSL https://testspace-client.s3.amazonaws.com/testspace-linux.tgz | tar -zxvf- -C .
-  # - ./testspace config url rycus86.testspace.com
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
   # run the tests
   - |
     nose2 -v \
@@ -21,15 +25,40 @@ after_script:
   # coverage reports
   - |
     if [[ "$(python --version 2>&1)" = *3.6* ]]; then
-      # coveralls || exit 0
-      # ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT || exit 0
-      # ./testspace nose2-junit.xml coverage.xml || exit 0
+      coveralls || exit 0
+      ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT || exit 0
       pylint src/*.py -r n \
         --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" \
         | tee pylint-report.txt ; echo -n
-      # sonar-scanner -Dsonar.projectKey=domain-automation -Dsonar.sources=src \
-      #  -Dsonar.python.xunit.reportPath=nose2-junit.xml \
-      #  -Dsonar.python.coverage.reportPath=coverage.xml \
-      #  -Dsonar.python.pylint.reportPath=pylint-report.txt
+      sonar-scanner -Dsonar.projectKey=domain-automation -Dsonar.sources=src \
+        -Dsonar.python.xunit.reportPath=nose2-junit.xml \
+        -Dsonar.python.coverage.reportPath=coverage.xml \
+        -Dsonar.python.pylint.reportPath=pylint-report.txt
     fi
 
+jobs:
+  include:
+    - &deploy-stage
+      stage: deploy
+      if: branch = master
+      script:
+        - docker run --rm --privileged multiarch/qemu-user-static:register --reset
+        - |
+          docker build -t domain-automation:$DOCKER_TAG -f $DOCKERFILE .
+        - docker tag domain-automation:$DOCKER_TAG rycus86/domain-automation:$DOCKER_TAG
+        - docker login -u="rycus86" -p="$DOCKER_PASSWORD"
+      after_success:
+        - docker push rycus86/domain-automation:$DOCKER_TAG
+      env:
+        - DOCKER_TAG=amd64
+        - DOCKERFILE=Dockerfile
+
+    - <<: *deploy-stage
+      env:
+        - DOCKER_TAG=armhf
+        - DOCKERFILE=Dockerfile.armhf
+
+    - <<: *deploy-stage
+      env:
+        - DOCKER_TAG=aarch64
+        - DOCKERFILE=Dockerfile.aarch64
