@@ -1,4 +1,21 @@
+import docker_helper
+
+
 base_domain = 'localhost.local'
+default_config_path = '/var/secrets/app.config'
+
+
+def read_configuration(key, path, default=None):
+    value = docker_helper.read_configuration(
+        key, path, default=default
+    )
+
+    if value or path == default_config_path:
+        return value
+
+    return docker_helper.read_configuration(
+        key, default_config_path, default=default
+    )
 
 
 class Subdomain(object):

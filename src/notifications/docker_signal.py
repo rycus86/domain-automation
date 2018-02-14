@@ -7,8 +7,9 @@ import argparse
 import docker
 from docker.types.services import ServiceMode, RestartPolicy
 
-from docker_helper import get_current_container_id, read_configuration
+from docker_helper import get_current_container_id
 
+from config import read_configuration
 from notifications import NotificationManager
 
 

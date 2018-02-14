@@ -2,8 +2,8 @@ import time
 import logging
 
 from slackclient import SlackClient
-from docker_helper import read_configuration
 
+from config import read_configuration
 from ssl_manager import SSLManager
 from notifications import NotificationManager
 

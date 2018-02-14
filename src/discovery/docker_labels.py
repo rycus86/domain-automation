@@ -1,8 +1,6 @@
 import docker
 
-from docker_helper import read_configuration
-
-from config import Subdomain, base_domain
+from config import Subdomain, base_domain, read_configuration, default_config_path
 from discovery import Discovery
 
 
@@ -13,7 +11,7 @@ class DockerLabelsDiscovery(Discovery):
             'DOCKER_DISCOVERY_LABEL', '/var/secrets/discovery', 'discovery.domain.name'
         )
         self.default_domain = read_configuration(
-            'DEFAULT_DOMAIN', '/var/secrets/app.config', base_domain
+            'DEFAULT_DOMAIN', default_config_path, base_domain
         )
 
     def _iter_subdomains(self):

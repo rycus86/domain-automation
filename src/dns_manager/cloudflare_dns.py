@@ -2,8 +2,7 @@ import logging
 import requests
 import CloudFlare
 
-from docker_helper import read_configuration
-
+from config import read_configuration
 from dns_manager import DNSManager
 
 

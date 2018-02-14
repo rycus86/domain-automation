@@ -2,8 +2,7 @@ import abc
 import logging
 import threading
 
-from docker_helper import read_configuration
-
+from config import read_configuration, default_config_path
 from scheduler import Scheduler
 
 
@@ -18,7 +17,7 @@ class RepeatingScheduler(Scheduler):
         self.job = None
         self.cancelled = False
         self.immediate_start = read_configuration(
-            'IMMEDIATE_START', '/var/secrets/app.config', 'no'
+            'IMMEDIATE_START', default_config_path, 'no'
         ).lower() in ('yes', 'true', '1')
 
     def schedule(self, func, *args, **kwargs):
