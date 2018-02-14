@@ -64,6 +64,9 @@ class MockNotificationManager(NotificationManager):
     def ssl_updated(self, subdomain, result):
         self.events.append(('SSL', subdomain.name, result))
 
+    def message(self, text):
+        self.events.append(('Message', text))
+
 
 # noinspection PyUnresolvedReferences
 class AppTest(unittest.TestCase):
@@ -87,6 +90,7 @@ class AppTest(unittest.TestCase):
             self.assertEqual(subdomain.current_ip, current_ip)
             self.assertGreater(subdomain.cert_update, 0)
 
+        self.assertIn(('Message', 'Application starting'), self.notifications.events)
         self.assertIn(('DNS', 'www', 'OK'), self.notifications.events)
         self.assertIn(('DNS', 'test', 'OK'), self.notifications.events)
         self.assertIn(('SSL', 'www', 'Updated'), self.notifications.events)
@@ -105,9 +109,10 @@ class AppTest(unittest.TestCase):
 
         app.main()
 
+        self.assertIn(('Message', 'Application starting'), self.notifications.events)
         self.assertIn(('DNS', 'www', 'OK'), self.notifications.events)
         self.assertNotIn(('DNS', 'test', 'OK'), self.notifications.events)
-        self.assertEqual(len(self.notifications.events), 1)
+        self.assertEqual(len(self.notifications.events), 2)
 
     def test_skip_ssl_update(self):
         class NonChangingDNSManager(MockDNSManager):
@@ -123,9 +128,10 @@ class AppTest(unittest.TestCase):
 
         app.main()
 
+        self.assertIn(('Message', 'Application starting'), self.notifications.events)
         self.assertIn(('SSL', 'test', 'Updated'), self.notifications.events)
         self.assertNotIn(('SSL', 'www', 'Updated'), self.notifications.events)
-        self.assertEqual(len(self.notifications.events), 1)
+        self.assertEqual(len(self.notifications.events), 2)
 
     def test_failing_dns_notification(self):
         class FailingDNSManager(MockDNSManager):

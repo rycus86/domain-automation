@@ -36,26 +36,32 @@ def check_all(discovery, dns, ssl, notifications):
         check(subdomain, public_ip, dns, ssl, notifications)
 
 
-def schedule(scheduler):
+def schedule(scheduler, notifications):
     discovery = factories.get_discovery()
     dns = factories.get_dns_manager()
     ssl = factories.get_ssl_manager()
-    notifications = factories.get_notification_manager()
+
+    notifications.message('Application starting')
 
     scheduler.schedule(check_all, discovery, dns, ssl, notifications)
 
 
-def setup_signals(scheduler):
-    signal.signal(signal.SIGINT, lambda *x: scheduler.cancel())
-    signal.signal(signal.SIGTERM, lambda *x: scheduler.cancel())
+def setup_signals(scheduler, notifications):
+    def exit_app():
+        scheduler.cancel()
+        notifications.message('Application exiting')
+
+    signal.signal(signal.SIGINT, lambda *x: exit_app())
+    signal.signal(signal.SIGTERM, lambda *x: exit_app())
 
 
 def main():
     scheduler = factories.get_scheduler()
+    notifications = factories.get_notification_manager()
 
-    setup_signals(scheduler)
+    setup_signals(scheduler, notifications)
 
-    schedule(scheduler)
+    schedule(scheduler, notifications)
 
 
 if __name__ == '__main__':

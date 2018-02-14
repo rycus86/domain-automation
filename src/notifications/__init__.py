@@ -10,3 +10,7 @@ class NotificationManager(object):
         for delegate in self.delegates:
             delegate.ssl_updated(subdomain, result)
 
+    def message(self, text):
+        for delegate in self.delegates:
+            delegate.message(text)
+
