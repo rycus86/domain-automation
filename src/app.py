@@ -4,9 +4,8 @@ import logging
 import factories
 
 
-logging.basicConfig(format='%(asctime)s [%(levelname)s] %(module)s.%(funcName)s - %(message)s')
-logger = logging.getLogger('domain-automation')
-logger.setLevel(logging.INFO)
+logging.basicConfig(format='%(asctime)s (%(name)s) %(module)s.%(funcName)s\n[%(levelname)s] %(message)s')
+logging.getLogger().setLevel(logging.INFO)
 
 
 def check(subdomain, public_ip, dns, ssl, notifications):
@@ -48,8 +47,8 @@ def schedule(scheduler, notifications):
 
 def setup_signals(scheduler, notifications):
     def exit_app():
-        scheduler.cancel()
         notifications.message('Application exiting')
+        scheduler.cancel()
 
     signal.signal(signal.SIGINT, lambda *x: exit_app())
     signal.signal(signal.SIGTERM, lambda *x: exit_app())

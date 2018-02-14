@@ -53,9 +53,9 @@ class CertbotCloudflareSSLManagerTest(unittest.TestCase):
         self.assertIn('--email unittest@cf.com', ' '.join(self.mock_result.args))
         self.assertIn('--dns-cloudflare', ' '.join(self.mock_result.args))
         self.assertIn('--dns-cloudflare-credentials .cloudflare.ini', ' '.join(self.mock_result.args))
-        self.assertIn('--dns-cloudflare-propagation-seconds 10', ' '.join(self.mock_result.args))
+        self.assertIn('--dns-cloudflare-propagation-seconds 30', ' '.join(self.mock_result.args))
 
-        self.assertIn(('timeout', 60), self.mock_result.kwargs.items())
+        self.assertIn(('timeout', 120), self.mock_result.kwargs.items())
         self.assertIn(('stdout', subprocess.PIPE), self.mock_result.kwargs.items())
         self.assertIn(('stderr', subprocess.PIPE), self.mock_result.kwargs.items())
         

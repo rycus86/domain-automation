@@ -6,4 +6,4 @@ class OneShotScheduler(Scheduler):
         func(*args, **kwargs)
 
     def cancel(self):
-        pass
+        exit(1)

@@ -7,3 +7,6 @@ class NoopNotificationManager(NotificationManager):
 
     def ssl_updated(self, subdomain, result):
         pass
+
+    def message(self, text):
+        pass

@@ -23,10 +23,12 @@ class CertbotCloudflareSSLManager(SSLManager):
             cf_email = read_configuration('CLOUDFLARE_EMAIL', '/var/secrets/cloudflare')
             cf_token = read_configuration('CLOUDFLARE_TOKEN', '/var/secrets/cloudflare')
 
-            certbot_email = read_configuration('CERTBOT_EMAIL', '/var/secrets/certbot', default=cf_email)
             dns_propagation_seconds = read_configuration(
-                'DNS_PROPAGATION_SECONDS', '/var/secrets/certbot', default='10'
+                'DNS_PROPAGATION_SECONDS', '/var/secrets/certbot', default='30'
             )
+
+            certbot_email = read_configuration('CERTBOT_EMAIL', '/var/secrets/certbot', default=cf_email)
+            certbot_timeout = int(read_configuration('CERTBOT_TIMEOUT', '/var/secrets/certbot', '120'))
             use_staging = read_configuration(
                 'CERTBOT_STAGING', '/var/secrets/certbot', default='no'
             ).lower() in ('yes', 'true', '1')
@@ -53,18 +55,24 @@ class CertbotCloudflareSSLManager(SSLManager):
 
             result = self.subprocess_run(
                 command,
-                timeout=60, universal_newlines=True,
+                timeout=certbot_timeout, universal_newlines=True,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
+
+            if result.returncode != 0:
+                if result.stdout:
+                    logger.info(result.stdout)
+
+                if result.stderr:
+                    logger.error(result.stderr)
+
+                return 'Failed with exit code: %s' % result.returncode
 
             if result.stdout:
                 logger.debug(result.stdout)
 
             if result.stderr:
                 logger.debug(result.stderr)
-
-            if result.returncode != 0:
-                return 'Failed with exit code: %s' % result.returncode
 
             if self.MSG_SUCCESSFUL in result.stdout:
                 if self.MSG_NEW_CERT in result.stdout or self.MSG_NEW_CERT in result.stderr:

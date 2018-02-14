@@ -50,6 +50,7 @@ class SlackNotificationTest(unittest.TestCase):
         self.client = MockSlackClient(self)
         self.manager = slack_message.SlackNotificationManager()
         self.manager.channel = 'unittest'
+        self.manager.bot_name = 'test-bot'
         self.manager.client = self.client
 
         if not hasattr(self, 'assertLogs'):
@@ -67,7 +68,10 @@ class SlackNotificationTest(unittest.TestCase):
         with self.assertLogs('slack-notification', 'DEBUG') as logs:
             self.manager.message(message)
 
-        self.client.assert_call('chat.postMessage', channel='unittest', text=message)
+        self.client.assert_call(
+            'chat.postMessage', channel='unittest', text=message,
+            as_user=False, username='test-bot'
+        )
 
         self.assertEqual(len(logs.output), 1)
         self.assertEqual(
@@ -81,7 +85,10 @@ class SlackNotificationTest(unittest.TestCase):
         with self.assertLogs('slack-notification', 'DEBUG') as logs:
             self.manager.dns_updated(Subdomain('dns', 'update.test'), 'OK, test')
 
-        self.client.assert_call('chat.postMessage', channel='unittest', text=message)
+        self.client.assert_call(
+            'chat.postMessage', channel='unittest', text=message,
+            as_user=False, username='test-bot'
+        )
 
         self.assertEqual(len(logs.output), 1)
         self.assertEqual(
@@ -95,7 +102,10 @@ class SlackNotificationTest(unittest.TestCase):
         with self.assertLogs('slack-notification', 'DEBUG') as logs:
             self.manager.ssl_updated(Subdomain('ssl', 'update.test'), 'Testing')
 
-        self.client.assert_call('chat.postMessage', channel='unittest', text=message)
+        self.client.assert_call(
+            'chat.postMessage', channel='unittest', text=message,
+            as_user=False, username='test-bot'
+        )
 
         self.assertEqual(len(logs.output), 1)
         self.assertEqual(
@@ -131,7 +141,10 @@ class SlackNotificationTest(unittest.TestCase):
         with self.assertLogs('slack-notification', 'DEBUG') as logs:
             self.manager.dns_updated(Subdomain('retry', 'update.test'), 'With retries')
 
-        self.client.assert_call('chat.postMessage', channel='unittest', text=message)
+        self.client.assert_call(
+            'chat.postMessage', channel='unittest', text=message,
+            as_user=False, username='test-bot'
+        )
 
         self.assertEqual(len(logs.output), 2)
         self.assertEqual(
@@ -152,7 +165,10 @@ class SlackNotificationTest(unittest.TestCase):
         with self.assertLogs('slack-notification', 'DEBUG') as logs:
             self.manager.dns_updated(Subdomain('give.up', 'update.test'), 'Failing')
 
-        self.client.assert_call('chat.postMessage', channel='unittest', text=message)
+        self.client.assert_call(
+            'chat.postMessage', channel='unittest', text=message,
+            as_user=False, username='test-bot'
+        )
 
         self.assertEqual(len(logs.output), 4)
 

@@ -1,4 +1,5 @@
 from config import read_configuration, default_config_path
+from notifications import NotificationManager
 
 
 scheduler_class = read_configuration(
@@ -53,7 +54,7 @@ def get_ssl_manager():
 def get_notification_manager():
     if ',' in notification_manager_class:
         managers = [
-            _instantiate(nm.strip() for nm in notification_manager_class.split(','))
+            _instantiate(nm.strip()) for nm in notification_manager_class.split(',')
         ]
 
         return NotificationManager(*managers)

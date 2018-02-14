@@ -113,7 +113,10 @@ class AppTest(unittest.TestCase):
         self.assertIn(('SSL', 'test', 'Updated'), self.notifications.events)
         self.assertNotIn(('Message', 'Application exiting'), self.notifications.events)
 
-        signals[app.signal.SIGTERM](app.signal.SIGTERM)
+        try:
+            signals[app.signal.SIGTERM](app.signal.SIGTERM)
+        except SystemExit:
+            pass
 
         self.assertIn(('Message', 'Application exiting'), self.notifications.events)
 
@@ -232,3 +235,22 @@ class AppTest(unittest.TestCase):
         self.assertIn(('SSL', 'www', 'Failed: SSL update failed'), self.notifications.events)
         self.assertIn(('DNS', 'test', 'Failed: DNS update failed'), self.notifications.events)
         self.assertIn(('SSL', 'test', 'Failed: SSL update failed'), self.notifications.events)
+
+    def test_suppress_notification_errors(self):
+        messages = list()
+
+        class RecordingNotificationManager(NotificationManager):
+            def message(self, text):
+                messages.append(text)
+
+        class FailingNotificationManager(NotificationManager):
+            def message(self, text):
+                raise Exception('oops')
+
+        self.notifications = NotificationManager(
+            FailingNotificationManager(), RecordingNotificationManager()
+        )
+
+        app.main()
+
+        self.assertEqual(messages, ['Application starting'])

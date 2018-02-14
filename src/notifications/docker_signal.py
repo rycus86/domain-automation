@@ -71,6 +71,7 @@ class DockerSignalNotification(NotificationManager):
             log_driver=log_driver, log_driver_options=log_config,
             mode=ServiceMode('global'), 
             restart_policy=RestartPolicy(condition='none', max_attempts=0),
+            mounts=['/var/run/docker.sock:/var/run/docker.sock:ro']
         )
 
         max_wait = 60
@@ -83,7 +84,10 @@ class DockerSignalNotification(NotificationManager):
             time.sleep(1)
 
         states = list(task['Status']['State'] for task in sender.tasks())
-        logs = ''.join(item for item in sender.logs(stdout=True, stderr=True)).strip()
+        logs = ''.join(
+            item.decode() if hasattr(item, 'decode') else item
+            for item in sender.logs(stdout=True, stderr=True)
+        ).strip()
 
         sender.remove()
 
@@ -109,4 +113,3 @@ def main(client, args=sys.argv[1:]):
 
 if __name__ == '__main__':
     main(docker.from_env())
-

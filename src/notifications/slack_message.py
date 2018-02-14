@@ -22,6 +22,12 @@ class SlackNotificationManager(NotificationManager):
         self.channel = read_configuration(
             'SLACK_CHANNEL', '/var/secrets/notifications', 'general'
         )
+        self.bot_name = read_configuration(
+            'SLACK_BOT_NAME', '/var/secrets/notifications', 'domain-automation-bot'
+        )
+        self.bot_icon = read_configuration(
+            'SLACK_BOT_ICON', '/var/secrets/notifications'
+        )
 
         self.client = SlackClient(token)
 
@@ -35,10 +41,15 @@ class SlackNotificationManager(NotificationManager):
             logger.error('Giving up on Slack message: %s' % message)
             return
 
+        extras = {'icon_url': self.bot_icon} if self.bot_icon else {}
+
         response = self.client.api_call(
             'chat.postMessage',
             channel=self.channel,
-            text=message
+            text=message,
+            as_user=False,
+            username=self.bot_name,
+            **extras
         )
 
         if response['ok'] is False:

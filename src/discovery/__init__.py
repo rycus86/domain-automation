@@ -1,4 +1,8 @@
 import abc
+import logging
+
+
+logger = logging.getLogger('docker-discovery')
 
 
 class Discovery(object):
@@ -10,6 +14,8 @@ class Discovery(object):
                 continue
 
             seen.add(subdomain.full)
+
+            logger.info('Processing %s ...' % subdomain.full)
 
             yield subdomain
 
