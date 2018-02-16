@@ -35,11 +35,16 @@ def _instantiate(class_name):
     return clazz()
 
 
-_scheduler, _discovery, _dns_manager, _ssl_manager = map(
-    _instantiate, (
-        scheduler_class, discovery_class, dns_manager_class, ssl_manager_class
-    )
-)
+def _instantiate_notification_manager():
+    if ',' in notification_manager_class:
+        managers = [
+            _instantiate(nm.strip()) for nm in notification_manager_class.split(',')
+        ]
+
+        return NotificationManager(*managers)
+
+    else:
+        return _instantiate(notification_manager_class)
 
 
 def get_scheduler():
@@ -58,20 +63,14 @@ def get_ssl_manager():
     return _ssl_manager
 
 
-def _instantiate_notification_manager():
-    if ',' in notification_manager_class:
-        managers = [
-            _instantiate(nm.strip()) for nm in notification_manager_class.split(',')
-        ]
-
-        return NotificationManager(*managers)
-
-    else:
-        return _instantiate(notification_manager_class)
+def get_notification_manager():
+    return _notification_manager
 
 
 _notification_manager = _instantiate_notification_manager()
 
-
-def get_notification_manager():
-    return _notification_manager
+_scheduler, _discovery, _dns_manager, _ssl_manager = map(
+    _instantiate, (
+        scheduler_class, discovery_class, dns_manager_class, ssl_manager_class
+    )
+)
