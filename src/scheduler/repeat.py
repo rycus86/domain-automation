@@ -40,6 +40,9 @@ class RepeatingScheduler(Scheduler):
             if not self.job:
                 return
 
+            if self.timer:
+                self.timer.cancel()
+
             try:
                 func, args, kwargs = self.job
                 func(*args, **kwargs)
@@ -55,7 +58,9 @@ class RepeatingScheduler(Scheduler):
     def cancel(self):
         with self.lock:
             self.cancelled = True
-            self.timer.cancel()
+
+            if self.timer:
+                self.timer.cancel()
 
     @property
     @abc.abstractmethod

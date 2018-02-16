@@ -80,3 +80,13 @@ class RepeatingSchedulerTest(unittest.TestCase):
         time.sleep(0.1)
 
         self.assertGreater(self.invocations, 1)
+
+    def test_repeats(self):
+        self.scheduler.time = 0.1
+        self.scheduler.schedule(self._invoke)
+
+        time.sleep(0.5)
+
+        self.scheduler.cancel()
+
+        self.assertAlmostEqual(self.invocations, 5, delta=1)
