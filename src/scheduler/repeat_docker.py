@@ -5,7 +5,8 @@ from datetime import datetime, timedelta
 
 import docker
 
-from factories import get_notification_manager
+import factories
+
 from scheduler.repeat import FiveMinutesScheduler
 
 
@@ -15,7 +16,7 @@ logger = logging.getLogger('docker-scheduler')
 class DockerAwareScheduler(FiveMinutesScheduler):
     def __init__(self):
         super(DockerAwareScheduler, self).__init__()
-        self.notifications = get_notification_manager()
+        self.notifications = factories.get_notification_manager()
         self.client = docker.from_env()
         self.thread = threading.Thread(target=self.listen_for_events)
 
