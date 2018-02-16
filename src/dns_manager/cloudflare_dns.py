@@ -72,7 +72,7 @@ class CloudflareDNSManager(DNSManager):
 
             record = self.cloudflare.zones.dns_records.put(
                 record['zone_id'], record['id'],
-                data=dict(name=subdomain.name, type='A', content=public_ip, proxied=True)
+                data=dict(name=subdomain.name, type='A', content=public_ip, proxied=record['proxied'])
             )
 
             if record and record['content'] == public_ip and record['name'] == subdomain.full:
