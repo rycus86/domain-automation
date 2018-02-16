@@ -64,5 +64,6 @@ class RepeatingScheduler(Scheduler):
 
 
 class FiveMinutesScheduler(RepeatingScheduler):
+    @property
     def interval(self):
         return 5 * 60
