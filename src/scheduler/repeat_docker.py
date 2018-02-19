@@ -28,7 +28,7 @@ class DockerAwareScheduler(FiveMinutesScheduler):
         since = datetime.utcnow()
 
         while not self.cancelled:
-            until = datetime.utcnow() + timedelta(seconds=1)
+            until = datetime.utcnow() + timedelta(seconds=5)
 
             self.process_events(since=since, until=until)
 
@@ -61,5 +61,5 @@ class DockerAwareScheduler(FiveMinutesScheduler):
 
     def cancel(self):
         super(DockerAwareScheduler, self).cancel()
-        self.thread.join(timeout=3)
+        self.thread.join(timeout=10)
         self.client.api.close()
