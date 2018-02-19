@@ -52,7 +52,7 @@ class CloudflareDNSManager(DNSManager):
                     self._dns_records[zone_id] = {
                         record['name']: record
                         for record in self.cloudflare.zones.dns_records.get(zone_id)
-                        if record['type'] in ('A', 'AAAA')
+                        if record['type'] == 'A'
                     }
 
                 return self._dns_records.get(zone_id, dict()).get(subdomain.full)
