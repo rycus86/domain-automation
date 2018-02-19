@@ -92,8 +92,6 @@ and listens for *Swarm service create events*, to kick off an out-of-schedule up
 | ------------------ | ----------------- | ------------------ | ------------- | -------- |
 | Start the first execution as soon as the application starts | `IMMEDIATE_START` | `/var/secrets/app.config` | `no` | no |
 
-> Coming soon...
-
 ### Notifications
 
 Notification managers are configured with the `NOTIFICATION_MANAGER_CLASS` key.
