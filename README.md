@@ -134,7 +134,7 @@ would send a `SIGHUP` signal to the main process (`pid 1`) in the container.
 
 | Configuration item | Configuration key | Configuration file | Default value | Required |
 | ------------------ | ----------------- | ------------------ | ------------- | -------- |
-| The Docker __container__ label name | `DOCKER_SIGNAL_LABEL` | `/var/secrets/notifications` | domain.automation.signal | no |
+| The Docker __container__ label name | `DOCKER_SIGNAL_LABEL` | `/var/secrets/notifications` | `domain.automation.signal` | no |
 
 This manager uses __container__ labels (not Swarm service labels), but it does support
 Swarm services and stacks.
