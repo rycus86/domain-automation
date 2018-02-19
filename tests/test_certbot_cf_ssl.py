@@ -87,7 +87,7 @@ class CertbotCloudflareSSLManagerTest(unittest.TestCase):
         self.assertIn('-d unknown.unit.test', ' '.join(self.mock_result.args))
 
     def test_use_staging_servers(self):
-        os.environ['CERTBOT_STAGING'] = 'Yes'
+        self.manager.use_staging = True
 
         self.manager.update(Subdomain('staging', 'unit.test'))
 

@@ -15,27 +15,35 @@ class CertbotCloudflareSSLManager(SSLManager):
     MSG_SUCCESSFUL = 'Congratulations!'
     MSG_NOT_YET_DUE = 'not yet due for renewal'
 
+    def __init__(self):
+        super(CertbotCloudflareSSLManager, self).__init__()
+
+        self.cf_email = read_configuration('CLOUDFLARE_EMAIL', '/var/secrets/cloudflare')
+        self.cf_token = read_configuration('CLOUDFLARE_TOKEN', '/var/secrets/cloudflare')
+
+        self.dns_propagation_seconds = read_configuration(
+            'DNS_PROPAGATION_SECONDS', '/var/secrets/certbot', default='30'
+        )
+
+        self.certbot_email = read_configuration(
+            'CERTBOT_EMAIL', '/var/secrets/certbot', default=self.cf_email
+        )
+        self.certbot_timeout = int(read_configuration(
+            'CERTBOT_TIMEOUT', '/var/secrets/certbot', '120'
+        ))
+        self.use_staging = read_configuration(
+            'CERTBOT_STAGING', '/var/secrets/certbot', default='no'
+        ).lower() in ('yes', 'true', '1')
+
+
     def needs_update(self, subdomain):
         return True  # we'll use 'certonly' with '--keep'
 
     def update(self, subdomain):
         try:
-            cf_email = read_configuration('CLOUDFLARE_EMAIL', '/var/secrets/cloudflare')
-            cf_token = read_configuration('CLOUDFLARE_TOKEN', '/var/secrets/cloudflare')
-
-            dns_propagation_seconds = read_configuration(
-                'DNS_PROPAGATION_SECONDS', '/var/secrets/certbot', default='30'
-            )
-
-            certbot_email = read_configuration('CERTBOT_EMAIL', '/var/secrets/certbot', default=cf_email)
-            certbot_timeout = int(read_configuration('CERTBOT_TIMEOUT', '/var/secrets/certbot', '120'))
-            use_staging = read_configuration(
-                'CERTBOT_STAGING', '/var/secrets/certbot', default='no'
-            ).lower() in ('yes', 'true', '1')
-
             with open('.cloudflare.ini', 'w') as cloudflare_config:
-                cloudflare_config.write('dns_cloudflare_email = %s\n' % cf_email)
-                cloudflare_config.write('dns_cloudflare_api_key = %s\n' % cf_token)
+                cloudflare_config.write('dns_cloudflare_email = %s\n' % self.cf_email)
+                cloudflare_config.write('dns_cloudflare_api_key = %s\n' % self.cf_token)
 
             os.chmod('.cloudflare.ini', 0o400)
 
@@ -46,16 +54,16 @@ class CertbotCloudflareSSLManager(SSLManager):
                     '-d', subdomain.full,
                     '--dns-cloudflare',
                     '--dns-cloudflare-credentials', '.cloudflare.ini',
-                    '--dns-cloudflare-propagation-seconds', str(dns_propagation_seconds),
-                    '--email', certbot_email, '--agree-tos'
+                    '--dns-cloudflare-propagation-seconds', str(self.dns_propagation_seconds),
+                    '--email', self.certbot_email, '--agree-tos'
                 ]
 
-            if use_staging:
+            if self.use_staging:
                 command.append('--staging')
 
             result = self.subprocess_run(
                 command,
-                timeout=certbot_timeout, universal_newlines=True,
+                timeout=self.certbot_timeout, universal_newlines=True,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
 
