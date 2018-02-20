@@ -3,6 +3,8 @@ import logging
 
 import factories
 
+from config import read_configuration, default_config_path
+
 
 logging.basicConfig(format='%(asctime)s (%(name)s) %(module)s.%(funcName)s\n[%(levelname)s] %(message)s')
 logging.getLogger().setLevel(logging.INFO)
@@ -45,20 +47,40 @@ def schedule(scheduler, notifications):
     scheduler.schedule(check_all, discovery, dns, ssl, notifications)
 
 
-def setup_signals(scheduler, notifications):
+def setup_signals(scheduler, notifications, metrics_server):
     def exit_app():
         notifications.message('Application exiting')
         scheduler.cancel()
+
+        if metrics_server:
+            metrics_server.stop()
 
     signal.signal(signal.SIGINT, lambda *x: exit_app())
     signal.signal(signal.SIGTERM, lambda *x: exit_app())
 
 
+def setup_metrics():
+    metrics_port = read_configuration('METRICS_PORT', default_config_path)
+
+    if metrics_port:
+        metrics_host = read_configuration(
+            'METRICS_HOST', default_config_path, '0.0.0.0'
+        )
+
+        from metrics import MetricsServer
+
+        server = MetricsServer(port=int(metrics_port), host=metrics_host)
+        server.start()
+
+        return server
+
+
 def main():
     scheduler = factories.get_scheduler()
     notifications = factories.get_notification_manager()
+    metrics_server = setup_metrics()
 
-    setup_signals(scheduler, notifications)
+    setup_signals(scheduler, notifications, metrics_server)
 
     schedule(scheduler, notifications)
 

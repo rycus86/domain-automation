@@ -1,5 +1,9 @@
+import os
 import time
+import socket
 import unittest
+
+import requests
 
 import app
 import factories
@@ -254,3 +258,33 @@ class AppTest(unittest.TestCase):
         app.main()
 
         self.assertEqual(messages, ['Application starting'])
+
+    def test_metrics(self):
+        port = self._get_free_tcp_port()
+
+        os.environ['METRICS_HOST'] = 'localhost'
+        os.environ['METRICS_PORT'] = str(port)
+
+        self.addCleanup(os.environ.pop, 'METRICS_HOST', None)
+        self.addCleanup(os.environ.pop, 'METRICS_PORT', None)
+
+        app.main()
+
+        metrics = requests.get('http://localhost:%d/metrics' % port).text
+
+        # process / platform
+        self.assertIn('python_info{', metrics)
+        self.assertIn('process_start_time_seconds ', metrics)
+
+        # app info
+        self.assertIn('domain_automation_app_info{version=', metrics)
+        self.assertIn('domain_automation_app_built_at ', metrics)
+
+    @staticmethod
+    def _get_free_tcp_port():
+        tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        tcp.bind(('localhost', 0))
+        _, port = tcp.getsockname()
+        tcp.close()
+
+        return port

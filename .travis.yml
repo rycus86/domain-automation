@@ -45,7 +45,10 @@ jobs:
       script:
         - docker run --rm --privileged multiarch/qemu-user-static:register --reset
         - |
-          docker build -t domain-automation:$DOCKER_TAG -f $DOCKERFILE .
+          docker build -t domain-automation:$DOCKER_TAG \
+            --build-arg GIT_COMMIT=$TRAVIS_COMMIT       \
+            --build-arg BUILD_TIMESTAMP=$(date +%s)     \
+            -f $DOCKERFILE .
         - docker tag domain-automation:$DOCKER_TAG rycus86/domain-automation:$DOCKER_TAG
         - docker login -u="rycus86" -p="$DOCKER_PASSWORD"
       after_success:
