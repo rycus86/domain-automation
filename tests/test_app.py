@@ -30,7 +30,7 @@ class MockDiscovery(Discovery):
             MockSubdomain(b, base) for b in bases
         )
 
-    def iter_subdomains(self):
+    def _iter_subdomains(self):
         for subdomain in self.subdomains:
             yield subdomain
 
@@ -279,6 +279,9 @@ class AppTest(unittest.TestCase):
         # app info
         self.assertIn('domain_automation_app_info{version=', metrics)
         self.assertIn('domain_automation_app_built_at ', metrics)
+
+        # discovery
+        self.assertIn('domain_automation_discovery_subdomains 2.0', metrics)
 
     @staticmethod
     def _get_free_tcp_port():

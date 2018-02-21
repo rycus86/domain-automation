@@ -4,11 +4,21 @@ import logging
 from slackclient import SlackClient
 
 from config import read_configuration
-from ssl_manager import SSLManager
+from metrics import Counter
 from notifications import NotificationManager
+from ssl_manager import SSLManager
 
 
 logger = logging.getLogger('slack-notification')
+
+messages_sent = Counter(
+    'domain_automation_slack_sent',
+    'The number of messages sent to Slack'
+)
+messages_failed = Counter(
+    'domain_automation_slack_failed',
+    'The number of messages failed to send to Slack'
+)
 
 
 class SlackNotificationManager(NotificationManager):
@@ -53,6 +63,8 @@ class SlackNotificationManager(NotificationManager):
         )
 
         if response['ok'] is False:
+            messages_failed.inc()
+
             if 'Retry-After' in response['headers']:
                 delay = int(response['headers']['Retry-After'])
 
@@ -66,6 +78,8 @@ class SlackNotificationManager(NotificationManager):
 
         else:
             logger.info('Slack message sent: %s' % message)
+
+            messages_sent.inc()
 
     def dns_updated(self, subdomain, result):
         self.send_update('DNS', subdomain, result)

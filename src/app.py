@@ -4,6 +4,7 @@ import logging
 import factories
 
 from config import read_configuration, default_config_path
+from metrics import MetricsServer
 
 
 logging.basicConfig(format='%(asctime)s (%(name)s) %(module)s.%(funcName)s\n[%(levelname)s] %(message)s')
@@ -66,8 +67,6 @@ def setup_metrics():
         metrics_host = read_configuration(
             'METRICS_HOST', default_config_path, '0.0.0.0'
         )
-
-        from metrics import MetricsServer
 
         server = MetricsServer(port=int(metrics_port), host=metrics_host)
         server.start()

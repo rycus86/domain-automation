@@ -3,10 +3,24 @@ import requests
 import CloudFlare
 
 from config import read_configuration
+from metrics import Counter
 from dns_manager import DNSManager
 
 
 logger = logging.getLogger('dns-cloudflare')
+
+dns_records_created = Counter(
+    'domain_automation_dns_cloudflare_created',
+    'Number of DNS records created in total'
+)
+dns_records_updated = Counter(
+    'domain_automation_dns_cloudflare_updated',
+    'Number of DNS records updated in total'
+)
+dns_records_failed = Counter(
+    'domain_automation_dns_cloudflare_failed',
+    'Number of DNS records failed to create or update'
+)
 
 
 class CloudflareDNSManager(DNSManager):
@@ -79,10 +93,14 @@ class CloudflareDNSManager(DNSManager):
             )
 
             if record and record['content'] == public_ip and record['name'] == subdomain.full:
+                dns_records_updated.inc()
+
                 return 'OK, updated [%s]' % public_ip
 
         except Exception as ex:
             logger.error('Failed to update the DNS records for %s' % subdomain.full, exc_info=ex)
+
+        dns_records_failed.inc()
 
         return 'Failed to update'
 
@@ -95,13 +113,16 @@ class CloudflareDNSManager(DNSManager):
             )
 
             if record and record['content'] == public_ip and record['name'] == subdomain.full:
-                return 'OK, created [%s]' % public_ip
+                dns_records_created.inc()
 
-            else:
-                return 'Failed to create'
+                return 'OK, created [%s]' % public_ip
 
         except Exception as ex:
             logger.error('Failed to create the DNS records for %s' % subdomain.full, exc_info=ex)
+
+        dns_records_failed.inc()
+
+        return 'Failed to create'
 
     def update(self, subdomain, public_ip):
         if not public_ip:
