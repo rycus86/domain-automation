@@ -1,5 +1,5 @@
-import time
 import logging
+import threading
 
 from slackclient import SlackClient
 
@@ -70,8 +70,12 @@ class SlackNotificationManager(NotificationManager):
 
                 logger.debug('Retrying Slack message after %d seconds' % delay)
 
-                time.sleep(delay)
-                self.send_message(message, retry=retry + 1)
+                retry_timer = threading.Timer(
+                    delay, self.send_message,
+                    args=[message], kwargs={'retry': retry + 1}
+                )
+                retry_timer.setDaemon(True)
+                retry_timer.start()
 
             else:
                 logger.error('Failed to send message to Slack: %s' % message)

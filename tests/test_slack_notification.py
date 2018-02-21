@@ -44,9 +44,22 @@ class MockLogContext(object):
         slack_message.logger.error = self.original_logger_error
 
 
+class MockTimer(object):
+    def __init__(self, _, func, args=None, kwargs=None):
+        self.function = func
+        self.args = args
+        self.kwargs = kwargs
+
+    def setDaemon(self, _):
+        pass
+
+    def start(self):
+        self.function(*self.args, **self.kwargs)
+
+
 class SlackNotificationTest(unittest.TestCase):
     def setUp(self):
-        self.original_sleep = slack_message.time.sleep
+        self.original_timer = slack_message.threading.Timer
         self.client = MockSlackClient(self)
         self.manager = slack_message.SlackNotificationManager()
         self.manager.channel = 'unittest'
@@ -57,7 +70,7 @@ class SlackNotificationTest(unittest.TestCase):
             setattr(self, 'assertLogs', self._assert_logs)
 
     def tearDown(self):
-        slack_message.time.sleep = self.original_sleep
+        slack_message.threading.Timer = self.original_timer
 
     def _assert_logs(self, name, level):
         return MockLogContext(name)
@@ -134,7 +147,8 @@ class SlackNotificationTest(unittest.TestCase):
 
         self.manager.send_message = send_message
 
-        slack_message.time.sleep = lambda x: x
+        # slack_message.time.sleep = lambda x: x
+        slack_message.threading.Timer = MockTimer
 
         message = '`[DNS update]` *retry.update.test* : With retries'
 
@@ -158,7 +172,9 @@ class SlackNotificationTest(unittest.TestCase):
 
     def test_give_up_retries(self):
         self.client.response = {'ok': False, 'headers': {'Retry-After': '3'}}
-        slack_message.time.sleep = lambda x: x
+
+        # slack_message.time.sleep = lambda x: x
+        slack_message.threading.Timer = MockTimer
 
         message = '`[DNS update]` *give.up.update.test* : Failing'
 

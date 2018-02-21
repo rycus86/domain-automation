@@ -1,5 +1,8 @@
+import os
 import signal
 import logging
+
+from datetime import datetime
 
 import factories
 
@@ -43,7 +46,15 @@ def schedule(scheduler, notifications):
     dns = factories.get_dns_manager()
     ssl = factories.get_ssl_manager()
 
-    notifications.message('Application starting')
+    app_version = os.environ.get('GIT_COMMIT') or 'unknown'
+    app_build_time = str(datetime.fromtimestamp(
+        float(os.environ.get('BUILD_TIMESTAMP') or '0')
+    ))
+
+    notifications.message(
+        'Application starting (version: %s, built: %s)' %
+        (app_version, app_build_time)
+    )
 
     scheduler.schedule(check_all, discovery, dns, ssl, notifications)
 

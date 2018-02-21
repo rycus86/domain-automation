@@ -110,7 +110,16 @@ class AppTest(unittest.TestCase):
             self.assertEqual(subdomain.current_ip, current_ip)
             self.assertGreater(subdomain.cert_update, 0)
 
-        self.assertIn(('Message', 'Application starting'), self.notifications.events)
+        for message_type, message in self.notifications.events:
+            if message_type == 'Message':
+                self.assertIn('Application starting', message)
+                self.assertIn('version: unknown', message)
+                self.assertIn('built: 1970-01-01 00:00:00', message)
+                break
+
+        else:
+            self.fail('Startup message not found')
+
         self.assertIn(('DNS', 'www', 'OK'), self.notifications.events)
         self.assertIn(('DNS', 'test', 'OK'), self.notifications.events)
         self.assertIn(('SSL', 'www', 'Updated'), self.notifications.events)
@@ -137,7 +146,16 @@ class AppTest(unittest.TestCase):
 
         app.main()
 
-        self.assertIn(('Message', 'Application starting'), self.notifications.events)
+        for message_type, message in self.notifications.events:
+            if message_type == 'Message':
+                self.assertIn('Application starting', message)
+                self.assertIn('version: unknown', message)
+                self.assertIn('built: 1970-01-01 00:00:00', message)
+                break
+
+        else:
+            self.fail('Startup message not found')
+
         self.assertIn(('DNS', 'www', 'OK'), self.notifications.events)
         self.assertNotIn(('DNS', 'test', 'OK'), self.notifications.events)
         self.assertEqual(len(self.notifications.events), 2)
@@ -156,7 +174,16 @@ class AppTest(unittest.TestCase):
 
         app.main()
 
-        self.assertIn(('Message', 'Application starting'), self.notifications.events)
+        for message_type, message in self.notifications.events:
+            if message_type == 'Message':
+                self.assertIn('Application starting', message)
+                self.assertIn('version: unknown', message)
+                self.assertIn('built: 1970-01-01 00:00:00', message)
+                break
+
+        else:
+            self.fail('Startup message not found')
+
         self.assertIn(('SSL', 'test', 'Updated'), self.notifications.events)
         self.assertNotIn(('SSL', 'www', 'Updated'), self.notifications.events)
         self.assertEqual(len(self.notifications.events), 2)
@@ -257,7 +284,8 @@ class AppTest(unittest.TestCase):
 
         app.main()
 
-        self.assertEqual(messages, ['Application starting'])
+        self.assertEqual(len(messages), 1)
+        self.assertIn('Application starting', messages[0])
 
     def test_metrics(self):
         port = self._get_free_tcp_port()
