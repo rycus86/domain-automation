@@ -6,12 +6,10 @@ default_config_path = '/var/secrets/app.config'
 
 
 def read_configuration(key, path, default=None):
-    value = docker_helper.read_configuration(
-        key, path, default=default
-    )
+    value = docker_helper.read_configuration(key, path)
 
     if value or path == default_config_path:
-        return value
+        return value or default
 
     return docker_helper.read_configuration(
         key, default_config_path, default=default
