@@ -13,8 +13,12 @@ from metrics import MetricsServer
 logging.basicConfig(format='%(asctime)s (%(name)s) %(module)s.%(funcName)s\n[%(levelname)s] %(message)s')
 logging.getLogger().setLevel(logging.INFO)
 
+logger = logging.getLogger('app-main')
+
 
 def check(subdomain, public_ip, dns, ssl, notifications):
+    logger.info('Checking %s ...' % subdomain.full)
+
     if dns.needs_update(subdomain, public_ip):
         try:
             dns_result = dns.update(subdomain, public_ip)

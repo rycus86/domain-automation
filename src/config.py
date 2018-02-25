@@ -30,3 +30,6 @@ class Subdomain(object):
 
         else:
             return self.base
+
+    def __str__(self):
+        return self.full
