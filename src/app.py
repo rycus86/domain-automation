@@ -41,6 +41,8 @@ def check(subdomain, public_ip, dns, ssl, notifications):
 def check_all(discovery, dns, ssl, notifications):
     public_ip = dns.get_current_public_ip()
 
+    logger.info('Starting checks with public IP: %s' % public_ip)
+
     for subdomain in discovery.iter_subdomains():
         check(subdomain, public_ip, dns, ssl, notifications)
 
@@ -74,7 +76,7 @@ def setup_signals(scheduler, notifications, metrics_server):
     signal.signal(signal.SIGINT, lambda *x: exit_app())
     signal.signal(signal.SIGTERM, lambda *x: exit_app())
 
-    signal.signal(signal.SIGHUP, scheduler.run_now)
+    signal.signal(signal.SIGHUP, lambda *x: scheduler.run_now())
 
 
 def setup_metrics():
