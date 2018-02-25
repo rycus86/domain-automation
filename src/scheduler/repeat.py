@@ -32,6 +32,9 @@ class RepeatingScheduler(Scheduler):
                     self.timer = threading.Timer(self.interval, self._run)
                     self.timer.start()
 
+    def run_now(self):
+        self._run()
+
     def _run(self):
         with self.lock:
             if self.cancelled:

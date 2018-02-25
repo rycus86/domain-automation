@@ -90,3 +90,15 @@ class RepeatingSchedulerTest(unittest.TestCase):
         self.scheduler.cancel()
 
         self.assertAlmostEqual(self.invocations, 5, delta=1)
+
+    def test_run_now(self):
+        self.scheduler = MockScheduler()
+        self.scheduler.time = 60
+
+        self.scheduler.schedule(self._invoke)
+
+        self.assertEqual(self.invocations, 0)
+
+        self.scheduler.run_now()
+
+        self.assertEqual(self.invocations, 1)

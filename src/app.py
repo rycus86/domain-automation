@@ -74,6 +74,8 @@ def setup_signals(scheduler, notifications, metrics_server):
     signal.signal(signal.SIGINT, lambda *x: exit_app())
     signal.signal(signal.SIGTERM, lambda *x: exit_app())
 
+    signal.signal(signal.SIGHUP, scheduler.run_now)
+
 
 def setup_metrics():
     metrics_port = read_configuration('METRICS_PORT', default_config_path)
