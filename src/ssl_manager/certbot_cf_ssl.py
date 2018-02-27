@@ -35,7 +35,6 @@ class CertbotCloudflareSSLManager(SSLManager):
             'CERTBOT_STAGING', '/var/secrets/certbot', default='no'
         ).lower() in ('yes', 'true', '1')
 
-
     def needs_update(self, subdomain):
         return True  # we'll use 'certonly' with '--keep'
 

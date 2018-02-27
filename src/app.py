@@ -17,8 +17,6 @@ logger = logging.getLogger('app-main')
 
 
 def check(subdomain, public_ip, dns, ssl, notifications):
-    logger.info('Checking %s ...' % subdomain.full)
-
     if dns.needs_update(subdomain, public_ip):
         try:
             dns_result = dns.update(subdomain, public_ip)
