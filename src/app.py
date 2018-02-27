@@ -25,6 +25,9 @@ def check(subdomain, public_ip, dns, ssl, notifications):
             dns_result = 'Failed: %s' % ex
 
         notifications.dns_updated(subdomain, dns_result)
+
+    else:
+        logger.info('No DNS update needed for %s' % subdomain)
     
     if ssl.needs_update(subdomain):
         try:
@@ -34,6 +37,9 @@ def check(subdomain, public_ip, dns, ssl, notifications):
             ssl_result = 'Failed: %s' % ex
             
         notifications.ssl_updated(subdomain, ssl_result)
+
+    else:
+        logger.info('No SSL update needed for %s' % subdomain)
 
 
 def check_all(discovery, dns, ssl, notifications):
