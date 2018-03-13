@@ -87,23 +87,32 @@ class CertbotCloudflareSSLManagerTest(unittest.TestCase):
 
     def test_repeat_scheduling(self):
         self.mock_result.stdout = 'Maybe Certbot got updated'
-        subdomain = Subdomain('unknown', 'unit.test')
+        subdomain1 = Subdomain('unknown-1', 'unit.test')
+        subdomain2 = Subdomain('unknown-2', 'unit.test')
 
-        self.assertTrue(self.manager.needs_update(subdomain))
-        result = self.manager.update(subdomain)
+        self.assertTrue(self.manager.needs_update(subdomain1))
+        result = self.manager.update(subdomain1)
         self.assertEqual(result, 'Unknown')
 
-        self.assertFalse(self.manager.needs_update(subdomain))
-
-        self.manager.last_run = datetime.now() - timedelta(seconds=6 * 60 * 60)
-
-        self.assertFalse(self.manager.needs_update(subdomain))
-
-        self.manager.last_run = datetime.now() - timedelta(days=0.5, seconds=30)
-
-        self.assertTrue(self.manager.needs_update(subdomain))
-        result = self.manager.update(subdomain)
+        self.assertTrue(self.manager.needs_update(subdomain2))
+        result = self.manager.update(subdomain2)
         self.assertEqual(result, 'Unknown')
+
+        self.assertFalse(self.manager.needs_update(subdomain1))
+        self.assertFalse(self.manager.needs_update(subdomain2))
+
+        self.manager.last_run[subdomain1.full] = datetime.now() - timedelta(seconds=6 * 60 * 60)
+
+        self.assertFalse(self.manager.needs_update(subdomain1))
+        self.assertFalse(self.manager.needs_update(subdomain2))
+
+        self.manager.last_run[subdomain1.full] = datetime.now() - timedelta(days=0.5, seconds=30)
+
+        self.assertTrue(self.manager.needs_update(subdomain1))
+        result = self.manager.update(subdomain1)
+        self.assertEqual(result, 'Unknown')
+
+        self.assertFalse(self.manager.needs_update(subdomain1))
 
     def test_use_staging_servers(self):
         self.manager.use_staging = True

@@ -37,10 +37,10 @@ class CertbotCloudflareSSLManager(SSLManager):
             'CERTBOT_STAGING', '/var/secrets/certbot', default='no'
         ).lower() in ('yes', 'true', '1')
 
-        self.last_run = datetime.fromtimestamp(0)
+        self.last_run = dict()
 
     def needs_update(self, subdomain):
-        elapsed = datetime.now() - self.last_run
+        elapsed = datetime.now() - self.last_run.get(subdomain.full, datetime.fromtimestamp(0))
         return elapsed > timedelta(days=0.5)
 
     def update(self, subdomain):
@@ -80,7 +80,7 @@ class CertbotCloudflareSSLManager(SSLManager):
 
                 return 'Failed with exit code: %s' % result.returncode
 
-            self.last_run = datetime.now()
+            self.last_run[subdomain.full] = datetime.now()
 
             if result.stdout:
                 logger.debug(result.stdout)
