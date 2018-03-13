@@ -2,6 +2,8 @@ import os
 import logging
 import subprocess
 
+from datetime import datetime, timedelta
+
 from config import read_configuration
 from ssl_manager import SSLManager
 
@@ -35,8 +37,11 @@ class CertbotCloudflareSSLManager(SSLManager):
             'CERTBOT_STAGING', '/var/secrets/certbot', default='no'
         ).lower() in ('yes', 'true', '1')
 
+        self.last_run = datetime.fromtimestamp(0)
+
     def needs_update(self, subdomain):
-        return True  # we'll use 'certonly' with '--keep'
+        elapsed = datetime.now() - self.last_run
+        return elapsed > timedelta(days=0.5)
 
     def update(self, subdomain):
         try:
@@ -74,6 +79,8 @@ class CertbotCloudflareSSLManager(SSLManager):
                     logger.error(result.stderr)
 
                 return 'Failed with exit code: %s' % result.returncode
+
+            self.last_run = datetime.now()
 
             if result.stdout:
                 logger.debug(result.stdout)

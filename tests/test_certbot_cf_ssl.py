@@ -2,6 +2,8 @@ import os
 import unittest
 import subprocess
 
+from datetime import datetime, timedelta
+
 from config import Subdomain
 from ssl_manager.certbot_cf_ssl import CertbotCloudflareSSLManager
 
@@ -36,9 +38,6 @@ class CertbotCloudflareSSLManagerTest(unittest.TestCase):
         del os.environ['CLOUDFLARE_EMAIL']
         del os.environ['CLOUDFLARE_TOKEN']
         del os.environ['CERTBOT_STAGING']
-
-    def test_always_updates(self):
-        self.assertTrue(self.manager.needs_update(Subdomain('test')))
 
     def test_new_certificate(self):
         self.mock_result.stdout = 'Congratulations! It worked!'
@@ -78,13 +77,33 @@ class CertbotCloudflareSSLManagerTest(unittest.TestCase):
         self.assertEqual(result, 'Not yet due for renewal')
         self.assertIn('-d still-valid.unit.test', ' '.join(self.mock_result.args))
 
-    def test_unkown_result(self):
+    def test_unknown_result(self):
         self.mock_result.stdout = 'Maybe Certbot got updated'
 
         result = self.manager.update(Subdomain('unknown', 'unit.test'))
         
         self.assertEqual(result, 'Unknown')
         self.assertIn('-d unknown.unit.test', ' '.join(self.mock_result.args))
+
+    def test_repeat_scheduling(self):
+        self.mock_result.stdout = 'Maybe Certbot got updated'
+        subdomain = Subdomain('unknown', 'unit.test')
+
+        self.assertTrue(self.manager.needs_update(subdomain))
+        result = self.manager.update(subdomain)
+        self.assertEqual(result, 'Unknown')
+
+        self.assertFalse(self.manager.needs_update(subdomain))
+
+        self.manager.last_run = datetime.now() - timedelta(seconds=6 * 60 * 60)
+
+        self.assertFalse(self.manager.needs_update(subdomain))
+
+        self.manager.last_run = datetime.now() - timedelta(days=0.5, seconds=30)
+
+        self.assertTrue(self.manager.needs_update(subdomain))
+        result = self.manager.update(subdomain)
+        self.assertEqual(result, 'Unknown')
 
     def test_use_staging_servers(self):
         self.manager.use_staging = True
