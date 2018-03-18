@@ -87,7 +87,7 @@ class CloudflareDNSManager(DNSManager):
             record = self.cloudflare.zones.dns_records.put(
                 record['zone_id'], record['id'],
                 data=dict(
-                    name=subdomain.name, type='A',
+                    name=subdomain.full, type='A',
                     content=public_ip, proxied=record.get('proxied', True)
                 )
             )
@@ -109,7 +109,7 @@ class CloudflareDNSManager(DNSManager):
             self._dns_records.clear()
 
             record = self.cloudflare.zones.dns_records.post(
-                zone['id'], data=dict(name=subdomain.name, type='A', content=public_ip, proxied=True)
+                zone['id'], data=dict(name=subdomain.full, type='A', content=public_ip, proxied=True)
             )
 
             if record and record['content'] == public_ip and record['name'] == subdomain.full:

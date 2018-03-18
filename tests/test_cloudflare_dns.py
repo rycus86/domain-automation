@@ -33,7 +33,7 @@ class MockDnsRecords(object):
         record = {
             'id': 'r-%s-%s' % (zone_id, hash(str(data))),
             'zone_id': zone_id,
-            'name': '%s.%s' % (data['name'], self.base),
+            'name': data['name'],
             'type': data['type'],
             'content': data['content']
         }
@@ -47,7 +47,7 @@ class MockDnsRecords(object):
 
     def put(self, zone_id, record_id, data):
         record = next(rec for rec in self.records[zone_id] if rec['id'] == record_id)
-        record['name'] = '%s.%s' % (data['name'], self.base)
+        record['name'] = data['name']
         record['content'] = data['content']
         record['type'] = data['type']
         return record

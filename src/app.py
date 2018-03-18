@@ -10,7 +10,7 @@ from config import read_configuration, default_config_path
 from metrics import MetricsServer
 
 
-logging.basicConfig(format='%(asctime)s (%(name)s) %(module)s.%(funcName)s\n[%(levelname)s] %(message)s')
+logging.basicConfig(format='%(asctime)s (%(name)s) %(funcName)s [%(levelname)s] %(message)s')
 logging.getLogger().setLevel(logging.INFO)
 
 logger = logging.getLogger('app-main')
