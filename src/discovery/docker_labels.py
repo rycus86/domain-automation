@@ -7,9 +7,9 @@ from discovery import Discovery
 class DockerLabelsDiscovery(Discovery):
     def __init__(self):
         self.client = docker.from_env()
-        self.label_name = read_configuration(
+        self.label_names = read_configuration(
             'DOCKER_DISCOVERY_LABEL', '/var/secrets/discovery', 'discovery.domain.name'
-        )
+        ).split(',')
         self.default_domain = read_configuration(
             'DEFAULT_DOMAIN', default_config_path, base_domain
         )
@@ -28,7 +28,7 @@ class DockerLabelsDiscovery(Discovery):
 
     def _iter_labels(self, labels):
         for name, value in labels.items():
-            if name == self.label_name:
+            if name in self.label_names:
                 for domain_name in value.split(','):
                     yield self._to_subdomain(domain_name.strip())
 

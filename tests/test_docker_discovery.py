@@ -195,3 +195,18 @@ class DockerDiscoveryTest(unittest.TestCase):
         self.assertEqual(subdomains[0].base, 'non.swarm')
         self.assertEqual(subdomains[0].full, 'test.non.swarm')
 
+    def test_multiple_label_names(self):
+        self.discovery.label_names = 'first.label,additional.item'.split(',')
+        self.discovery.default_domain = 'multi.labels'
+        self.client.add_all([
+            MockService({'first.label': 'first'}),
+            MockService({'additional.item': 'second'})
+        ])
+
+        subdomains = list(self.discovery.iter_subdomains())
+
+        self.assertEqual(len(subdomains), 2)
+        self.assertEqual(subdomains[0].name, 'first')
+        self.assertEqual(subdomains[0].full, 'first.multi.labels')
+        self.assertEqual(subdomains[1].name, 'second')
+        self.assertEqual(subdomains[1].full, 'second.multi.labels')
