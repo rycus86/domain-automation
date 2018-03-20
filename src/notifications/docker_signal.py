@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import random
 import logging
 import argparse
 
@@ -66,7 +67,10 @@ class DockerSignalNotification(NotificationManager):
         log_config = current_container.attrs['HostConfig']['LogConfig']['Config']
 
         sender = self.client.services.create(
-            image, command=command,
+            image=image, command=command,
+            name='domain-automation-signal-%d-%d' % (
+                int(time.time() * 1000), random.randint(100, 999)
+            ),
             env=['PYTHONPATH=%s' % os.environ.get('PYTHONPATH', '.')],
             log_driver=log_driver, log_driver_options=log_config,
             mode=ServiceMode('global'), 
