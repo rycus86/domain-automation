@@ -5,10 +5,28 @@ import subprocess
 from datetime import datetime, timedelta
 
 from config import read_configuration
+from metrics import Counter
 from ssl_manager import SSLManager
 
 
 logger = logging.getLogger('ssl-certbot-cloudflare')
+
+ssl_certificates_new = Counter(
+    'domain_automation_ssl_certbot_cf_new',
+    'Number of new SSL certificates requested'
+)
+ssl_certificates_renewed = Counter(
+    'domain_automation_ssl_certbot_cf_renewed',
+    'Number of SSL certificates renewed'
+)
+ssl_certificates_failed = Counter(
+    'domain_automation_ssl_certbot_cf_failed',
+    'Number of failing SSL certificate updates'
+)
+ssl_certificates_unknown = Counter(
+    'domain_automation_ssl_certbot_cf_unknown',
+    'Number of SSL certificate updates with unknown result'
+)
 
 
 class CertbotCloudflareSSLManager(SSLManager):
@@ -78,6 +96,8 @@ class CertbotCloudflareSSLManager(SSLManager):
                 if result.stderr:
                     logger.error(result.stderr)
 
+                ssl_certificates_failed.inc()
+
                 return 'Failed with exit code: %s' % result.returncode
 
             self.last_run[subdomain.full] = datetime.now()
@@ -90,18 +110,22 @@ class CertbotCloudflareSSLManager(SSLManager):
 
             if self.MSG_SUCCESSFUL in result.stdout:
                 if self.MSG_NEW_CERT in result.stdout or self.MSG_NEW_CERT in result.stderr:
+                    ssl_certificates_new.inc()
                     return 'OK, new certificate'
 
                 elif self.MSG_RENEW_CERT in result.stdout or self.MSG_RENEW_CERT in result.stderr:
+                    ssl_certificates_renewed.inc()
                     return 'OK, renewed'
 
                 else:
+                    ssl_certificates_unknown.inc()
                     return 'OK'
 
             elif self.MSG_NOT_YET_DUE in result.stdout:
                 return self.RESULT_NOT_YET_DUE_FOR_RENEWAL
 
             else:
+                ssl_certificates_unknown.inc()
                 return 'Unknown'
 
         finally:

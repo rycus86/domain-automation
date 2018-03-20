@@ -205,6 +205,7 @@ class DockerSignalNotificationTest(unittest.TestCase):
         self.assertIsNotNone(self.client.service)
         self.assertEqual(self.client.service.image, 'domain/automation')
         self.assertEqual(self.client.service.command[-2:], ['--label', 'test.label'])
+        self.assertIn('domain-automation-', self.client.service.name)
         self.assertGreater(len(self.client.service.env), 0)
         self.assertIn('PYTHONPATH=', self.client.service.env[0])
         self.assertEqual(self.client.service.log_driver, 'custom')
