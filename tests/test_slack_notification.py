@@ -11,12 +11,16 @@ class MockSlackClient(object):
         self.response = {'ok': True}
         self.last_call = None
 
-    def api_call(self, *args, **kwargs):
-        self.last_call = (args, kwargs)
+    def api_call(self, *ignored, **kwargs):
+        self.last_call = kwargs
         return self.response
 
-    def assert_call(self, *args, **kwargs):
-        self.test_case.assertEqual(self.last_call, (args, kwargs))
+    def chat_postMessage(self, *ignored, **kwargs):
+        self.last_call = kwargs
+        return self.response
+
+    def assert_call(self, *ignored, **kwargs):
+        self.test_case.assertEqual(self.last_call, kwargs)
 
 
 class MockLogContext(object):

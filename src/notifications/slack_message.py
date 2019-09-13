@@ -1,7 +1,7 @@
 import logging
 import threading
 
-from slackclient import SlackClient
+from slack import WebClient
 
 from config import read_configuration
 from metrics import Counter
@@ -39,7 +39,7 @@ class SlackNotificationManager(NotificationManager):
             'SLACK_BOT_ICON', '/var/secrets/notifications'
         )
 
-        self.client = SlackClient(token)
+        self.client = WebClient(token)
 
     def send_update(self, update_type, subdomain, result):
         message = '`[%s update]` *%s* : %s' % (update_type, subdomain.full, result)
@@ -53,8 +53,7 @@ class SlackNotificationManager(NotificationManager):
 
         extras = {'icon_url': self.bot_icon} if self.bot_icon else {}
 
-        response = self.client.api_call(
-            'chat.postMessage',
+        response = self.client.chat_postMessage(
             channel=self.channel,
             text=message,
             as_user=False,

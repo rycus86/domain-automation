@@ -8,6 +8,8 @@ import requests
 import app
 import factories
 
+from datetime import datetime
+
 from discovery import Discovery
 from config import Subdomain
 from dns_manager import DNSManager
@@ -114,7 +116,7 @@ class AppTest(unittest.TestCase):
             if message_type == 'Message':
                 self.assertIn('Application starting', message)
                 self.assertIn('version: unknown', message)
-                self.assertIn('built: 1970-01-01 00:00:00', message)
+                self.assertIn('built: %s' % datetime.fromtimestamp(0), message)
                 break
 
         else:
@@ -150,7 +152,7 @@ class AppTest(unittest.TestCase):
             if message_type == 'Message':
                 self.assertIn('Application starting', message)
                 self.assertIn('version: unknown', message)
-                self.assertIn('built: 1970-01-01 00:00:00', message)
+                self.assertIn('built: %s' % datetime.fromtimestamp(0), message)
                 break
 
         else:
@@ -178,7 +180,7 @@ class AppTest(unittest.TestCase):
             if message_type == 'Message':
                 self.assertIn('Application starting', message)
                 self.assertIn('version: unknown', message)
-                self.assertIn('built: 1970-01-01 00:00:00', message)
+                self.assertIn('built: %s' % datetime.fromtimestamp(0), message)
                 break
 
         else:
